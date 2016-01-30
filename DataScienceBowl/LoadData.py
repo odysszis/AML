@@ -5,6 +5,16 @@ import dicom
 #from scipy.misc import imresize #for use with a crop pre process
 
 
+# TODO use pickle for object serialisation
+# TODO reshape data to collapse into array of pixels
+# TODO add different preprocessing methods
+# TODO add method for storing resulting numpy arrays as theano shared variables
+# TODO add method for mapping input images to ground truth masks
+# TODO include meta data within download
+
+# local test: data = load_dcm_data('/Users/Peadar/Documents/KagglePythonProjects/AML/data/validate',0)
+
+
 def load_dcm_data(directory, preprocess):
 
     """
@@ -32,17 +42,8 @@ def load_dcm_data(directory, preprocess):
     print('Number of images {0}'.format(imagedata.shape[0]))
     return imagedata
 
-# TO DO use pickle for object serialisation
-# TO DO reshape data to collapse into array of pixels
-# TO DO add different preprocessing methods
-# TO DO add method for storing resulting numpy arrays as theano shared variables
-# TO DO  add method for mapping input images to ground truth masks
-
-# local test: data = load_dcm_data('/Users/Peadar/Documents/KagglePythonProjects/AML/data/validate',0)
-
 
 def cropImage():
-
 
     """
     TBC
