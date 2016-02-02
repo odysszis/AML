@@ -14,7 +14,7 @@ from scipy import misc
 
 # Declare the top level directories that hold the image and contour files within the sunnybrook data
 
-sb_root = "AML/data/SunnybrookData/"
+sb_root = "data/SunnybrookData/"
 image_dir = os.path.join(sb_root, "challenge_training")
 contour_dir = os.path.join(sb_root,"Sunnybrook Cardiac MR Database ContoursPart3","TrainingDataContours")
 
@@ -99,8 +99,7 @@ def load_contours_dcm(c_path, c_series, c_imgid,
 
     return imagedata, contourdata
 
-
-# There is a manual process to map contours to images, as IDs dont match exactly. Resulting in Dic:
+# There is a manual process to map contours to images, as IDs don't match exactly. Resulting in Dic:
 
 SAX_SERIES = {
 
@@ -130,8 +129,13 @@ imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
 
 # numpy files will appear in data folder of directory
 
-np.save('AML/data/SBtrainImage.npy', imagedata)
-np.save('AML/data/SBtrainMask.npy', contourdata)
+np.save('data/SBtrainImage.npy', imagedata)
+np.save('data/SBtrainMask.npy', contourdata)
+
+
+
+
+
 
 
 
