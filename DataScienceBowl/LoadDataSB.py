@@ -4,8 +4,7 @@ import fnmatch
 import re
 import numpy as np
 import dicom
-import opencv_engine as oe
-import cv2
+#import cv2
 from LoadData import crop_resize
 from scipy import misc
 
@@ -14,7 +13,7 @@ from scipy import misc
 
 # Declare the top level directories that hold the image and contour files within the sunnybrook data
 
-sb_root = "data/SunnybrookData/"
+sb_root = "SunnybrookData"
 image_dir = os.path.join(sb_root, "challenge_training")
 contour_dir = os.path.join(sb_root,"Sunnybrook Cardiac MR Database ContoursPart3","TrainingDataContours")
 
@@ -80,8 +79,8 @@ def load_contours_dcm(c_path, c_series, c_imgid,
         current_image = current_image.pixel_array.astype(float)/np.max(current_image.pixel_array) #between 0 and 1
         contour = np.loadtxt(c_path[i], delimiter=" ").astype(np.int)
         mask = np.zeros_like(current_image, dtype="uint8")
-        #mask[contour] = 1
-        cv2.fillPoly(mask, [contour], 1) #Need to install dependencies for cv2
+        mask[contour] = 1
+        #cv2.fillPoly(mask, [contour], 1) #Need to install dependencies for cv2
 
         #further preprocess image by passed method preprocess
         current_image = preprocess(current_image, **args)
