@@ -103,12 +103,12 @@ def get_vol_labels(filename):
 
 # Load data and store to numpy files for re-use
 
-data, ids = load_dcm_data('AML/data/train', crop_resize, newsize = (64,48))
-target = get_vol_labels('AML/data/train.csv')
+data, ids = load_dcm_data('data/train', crop_resize, newsize = (64,48))
+target = get_vol_labels('data/train.csv')
 
 # numpy files will appear in data folder of directory
-np.save('AML/data/trainIn.npy', data)
-np.save('AML/data/trainOut.npy', target)
+np.save('data/trainIn.npy', data)
+np.save('data/trainOut.npy', target)
 
 
 
