@@ -11,10 +11,11 @@ from scipy import misc
 # TODO add method for expanding training data set, as described in 'DSBC Challenge - Model outline'
 
 
+
 def load_dcm_data(directory, preprocess, **args):
 
     """
-    loads data from DCM files
+    loads data from DCM files into numpy arrays
 
     :param directory: top level folder where image .dcm files are stored
     :param preprocess: function handle which preprocessing method to apply to images
@@ -39,7 +40,7 @@ def load_dcm_data(directory, preprocess, **args):
                 continue
 
             current_image = dicom.read_file(image_path)
-            current_image = current_image.pixel_array.astype(float)/np.max(current_image.pixel_array) #between 0 and 1
+            current_image = current_image.pixel_array.astype(float)#/np.max(current_image.pixel_array) #between 0 and 1
             current_image = preprocess(current_image, **args) #applies selected prepocess routine
             imageid = "%s-%s" % (f.rsplit('-')[1], f.rsplit('-')[2][0:4])
             print('Image id loaded... {0}'.format(imageid))
@@ -56,7 +57,6 @@ def load_dcm_data(directory, preprocess, **args):
     return imagedata, imageids
 
 
-
 def crop_resize(image, crop=False, newsize=()):
 
     """
@@ -66,7 +66,7 @@ def crop_resize(image, crop=False, newsize=()):
     :param crop: true/false whether to crop image from centre
     :param newsize: optional tuples for new image size
 
-     returns cropped and resized image
+    RETURNS: cropped and resized image
     """
     if crop:
         edge = min(image.shape[:2]) #cropping from centre by using half the short edge length
@@ -77,7 +77,6 @@ def crop_resize(image, crop=False, newsize=()):
     image = misc.imresize(image, newsize)  #using scipy resize function with tuple for new size
 
     return image
-
 
 
 def get_vol_labels(filename):
@@ -103,12 +102,17 @@ def get_vol_labels(filename):
 
 # Load data and store to numpy files for re-use
 
-data, ids = load_dcm_data('data/train', crop_resize, newsize = (64,48))
-target = get_vol_labels('data/train.csv')
+if __name__ == "__main__":
 
-# numpy files will appear in data folder of directory
-np.save('data/trainIn.npy', data)
-np.save('data/trainOut.npy', target)
+    data, ids = load_dcm_data('data/validate', crop_resize, newsize = (64,48))
+    target = get_vol_labels('data/train.csv')
+    # numpy files will appear in data folder of directory
+    np.save('data/trainIn.npy', data)
+    np.save('data/trainOut.npy', target)
+
+
+
+
 
 
 
