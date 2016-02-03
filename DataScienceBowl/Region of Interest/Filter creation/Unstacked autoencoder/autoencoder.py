@@ -120,6 +120,8 @@ class dA(object):
             self.X = T.dmatrix(name='input')
         else:
             self.X = input
+
+
         self.params = [self.Whid, self.bhid] # these are the parameters we are optimizing
 
     def get_hidden_values(self, input):
@@ -134,8 +136,6 @@ class dA(object):
         """
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
-    # create 10000 minibatches
-    def
     def get_cost_updates(self, learning_rate, N):
         """
         :param learning_rate: rate which weighs the gradient step
@@ -145,7 +145,5 @@ class dA(object):
         y = self.get_output(h)
         cost = 1/N * numpy.square(y-)
 
-# TRAIN MODEL
-train_data = da.create_batches(
 
-)
+#---------- TRAIN MODEL ----------
