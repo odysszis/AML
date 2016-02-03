@@ -4,16 +4,17 @@ import fnmatch
 import re
 import numpy as np
 import dicom
-#import cv2
+import cv2
 from LoadData import crop_resize
-from scipy import misc
+import matplotlib.pyplot as plt
+
 
 
 # TODO add preprocessing on image data, like for kaggle training data LoadData routine
 
 # Declare the top level directories that hold the image and contour files within the sunnybrook data
 
-sb_root = "SunnybrookData"
+sb_root = "/Users/Peadar/Documents/KagglePythonProjects/SunnybrookData"
 image_dir = os.path.join(sb_root, "challenge_training")
 contour_dir = os.path.join(sb_root,"Sunnybrook Cardiac MR Database ContoursPart3","TrainingDataContours")
 
@@ -77,14 +78,15 @@ def load_contours_dcm(c_path, c_series, c_imgid,
         path = os.path.join(image_dir, c_series[i], file)
         current_image = dicom.read_file(path)
         current_image = current_image.pixel_array.astype(float)/np.max(current_image.pixel_array) #between 0 and 1
+
         contour = np.loadtxt(c_path[i], delimiter=" ").astype(np.int)
         mask = np.zeros_like(current_image, dtype="uint8")
-        mask[contour] = 1
-        #cv2.fillPoly(mask, [contour], 1) #Need to install dependencies for cv2
+        cv2.fillPoly(mask, [contour], 1) #Need to install dependencies for cv2
 
         #further preprocess image by passed method preprocess
         current_image = preprocess(current_image, **args)
         mask = preprocess(mask, **args)
+
 
         #collect data
         imagedata.append(current_image)
@@ -126,10 +128,13 @@ c_path, c_series, c_imgid = get_mapping(contour_dir)
 imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
                                            image_dir, SAX_SERIES, crop_resize, newsize = (64,48))
 
-# numpy files will appear in data folder of directory
+# numpy pickled files will appear in data folder of directory
+# use numpy.load to access
+imagedata.dump('data/SBtrainImage')
+contourdata.dump('data/SBtrainMask')
 
-np.save('data/SBtrainImage.npy', imagedata)
-np.save('data/SBtrainMask.npy', contourdata)
+
+
 
 
 

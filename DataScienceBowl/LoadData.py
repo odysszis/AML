@@ -106,10 +106,12 @@ if __name__ == "__main__":
 
     data, ids = load_dcm_data('data/train', crop_resize, newsize = (64,48))
     target = get_vol_labels('data/train.csv')
-    # numpy files will appear in data folder of directory
-    np.save('data/trainIn.npy', data)
-    np.save('data/trainOut.npy', target)
+    # numpy pickled files will appear in data folder of directory
+    #np.save('data/trainIn.npy', data)
+    #np.save('data/trainOut.npy', target)
 
+    data.dump('data/trainImage')
+    target.dump('data/trainVols')
 
 
 
