@@ -5,7 +5,6 @@ import dicom
 from scipy import misc
 
 
-# TODO use pickle for object serialisation
 # TODO reshape data to collapse into array of pixels (TBC depending on how input must look for model
 # TODO add method for storing resulting numpy arrays as theano shared variables
 # TODO add method for expanding training data set, as described in 'DSBC Challenge - Model outline'

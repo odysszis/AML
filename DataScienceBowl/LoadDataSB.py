@@ -8,9 +8,7 @@ import cv2
 from LoadData import crop_resize
 import matplotlib.pyplot as plt
 
-
-
-# TODO add preprocessing on image data, like for kaggle training data LoadData routine
+# TODO add method for storing resulting numpy arrays as theano shared variables
 
 # Declare the top level directories that hold the image and contour files within the sunnybrook data
 
