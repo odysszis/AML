@@ -124,7 +124,7 @@ SAX_SERIES = {
 
 c_path, c_series, c_imgid = get_mapping(contour_dir)
 imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                           image_dir, SAX_SERIES, crop_resize, newsize = (64,48))
+                                           image_dir, SAX_SERIES, crop_resize, newsize = (64, 64))
 
 # numpy pickled files will appear in data folder of directory
 # use numpy.load to access
