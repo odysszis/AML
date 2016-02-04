@@ -177,7 +177,7 @@ class dA(object):
         return (cost, updates)
 
 
-
+# blabla changes
 
 # TRAIN MODEL
 train_data = da.create_batches(
