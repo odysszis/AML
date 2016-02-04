@@ -62,25 +62,30 @@ f = theano.function([input], output)
 import pylab
 #from PIL import Image
 
-# open random image of dimensions 639x516
 #img = Image.open(open('doc/images/3wolfmoon.jpg'))
 # dimensions are (height, width, channel)
 #img = numpy.asarray(img, dtype='float64') / 256.
-train = numpy.load('data/trainIn.npy')
+
+
+# open random image of dimensions 64x48
+train = numpy.load('../data/trainIn.npy')
+train = numpy.delete(train,numpy.s_[3:480],axis=0)
+img = train / 64
 # put image in 4D tensor of shape (1, 3, height, width)
 #img_ = img.transpose(2, 0, 1).reshape(1, 3, 639, 516)
-img_ = train.transpose().reshape(1,48,480,64)
+img_ = img.transpose().reshape(1,3,64,48)
 
 filtered_img = f(img_)
 
 # plot original image and first and second components of output
-pylab.subplot(1, 3, 1); pylab.axis('off'); pylab.imshow(img)
-pylab.gray();
+#pylab.subplot(1, 3, 1); pylab.axis('off');
+#pylab.imshow(img)
+#pylab.gray();
 # recall that the convOp output (filtered image) is actually a "minibatch",
 # of size 1 here, so we take index 0 in the first dimension:
-pylab.subplot(1, 3, 2); pylab.axis('off'); pylab.imshow(filtered_img[0, 0, :, :])
-pylab.subplot(1, 3, 3); pylab.axis('off'); pylab.imshow(filtered_img[0, 1, :, :])
-pylab.show()
+#pylab.subplot(1, 3, 2); pylab.axis('off'); pylab.imshow(filtered_img[0, 0, :, :])
+#pylab.subplot(1, 3, 3); pylab.axis('off'); pylab.imshow(filtered_img[0, 1, :, :])
+#pylab.show()
 
 from theano.tensor.signal import downsample
 
@@ -90,12 +95,12 @@ pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True)
 f = theano.function([input],pool_out)
 
 invals = numpy.random.RandomState(1).rand(3, 2, 5, 5)
-print 'With ignore_border set to True:'
-print 'invals[0, 0, :, :] =\n', invals[0, 0, :, :]
-print 'output[0, 0, :, :] =\n', f(invals)[0, 0, :, :]
+print('With ignore_border set to True:')
+print('invals[0, 0, :, :] =\n', invals[0, 0, :, :])
+print('output[0, 0, :, :] =\n', f(invals)[0, 0, :, :])
 
 pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False)
 f = theano.function([input],pool_out)
-print 'With ignore_border set to False:'
-print 'invals[1, 0, :, :] =\n ', invals[1, 0, :, :]
-print 'output[1, 0, :, :] =\n ', f(invals)[1, 0, :, :]
+print('With ignore_border set to False:')
+print('invals[1, 0, :, :] =\n ', invals[1, 0, :, :])
+print('output[1, 0, :, :] =\n ', f(invals)[1, 0, :, :])
