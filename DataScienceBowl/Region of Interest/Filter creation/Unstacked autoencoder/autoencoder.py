@@ -157,6 +157,7 @@ class dA(object):
         :type pair (cost, update)
         :return: compute cost and update for one training step of the autoencoder
         """
+
         # y holds all the minibatch-processed vectors
         y = numpy.zeros((self.Xbatch.shape[0], self.Xbatch.shape[1]))
         for i in self.Xbatch.shape[0]:

@@ -1,6 +1,5 @@
 import theano.tensor as T
 import numpy as np
-from numpy import random
 import timeit
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
@@ -11,14 +10,13 @@ import sys
 #load data and collapse to correct dim
 #inputs to wrap in train function
 
-train = np.load('data/SBtrainImage')
-
-train_batch = np.load('data/SBtrainImage_batch')
+train = np.load('/DataScienceBowl/data/SBtrainImage')
+train_batch = np.load('/DataScienceBowl/data/SBtrainImage_batch')
 dim = train.shape
-train = np.reshape(train, (dim[0], dim[0]*dim[1]))
+train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
 dim = train_batch.shape
-train_batch = np.reshape(train_batch, (dim[0], dim[0]*dim[1]))
-
+train_batch = np.reshape(train_batch, (dim[0], (dim[1]*dim[2])))
+print(train_batch.shape)
 n_epochs=10
 lam = 10^4
 lrate = 10
@@ -40,10 +38,11 @@ da = dA(numpy_rng=rng,
         n_visible=121,
         n_hidden=100)
 
-cost, updates = da.get_cost_updates(learning_rate= lrate, lam=lam)
+cost, updates = da.get_cost_updates(learning_rate=lrate, lam=lam)
 
-train_da = theano.function(cost, updates=updates,
-                           givens={x_batch: train_batch})
+train_da = theano.function(outputs=cost, updates=updates,
+                           givens={x_batch: train_batch,
+                                   x: train})
 
 start_time = timeit.default_timer()
 
