@@ -60,3 +60,5 @@ for epoch in xrange(n_epochs):
     end_time = timeit.default_timer()
     training_time = (end_time - start_time)
 
+# TODO extract and store output from dA trained instance for reuse in subsequent steps
+
