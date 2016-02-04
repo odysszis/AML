@@ -10,10 +10,11 @@ rng = numpy.random.RandomState(23455)
 input = T.tensor4(name='input')
 
 # initialize shared variable for weights.
-# changed shape
-w_shp = (2, 1, 9, 9)
-# changed bound
-w_bound = numpy.sqrt(1 * 9 * 9)
+# Input = [mini-batch size, # of input feature maps, image height, image width].
+# W     = [# feature maps at layer m, # feature maps at layer m-1, filter height, filter width]
+
+w_shp = (100, 1, 11, 11)
+w_bound = numpy.sqrt(1 * 11 * 11)
 W = theano.shared( numpy.asarray(
             rng.uniform(
                 low=-1.0 / w_bound,
@@ -26,7 +27,7 @@ W = theano.shared( numpy.asarray(
 # particular application, we simply apply the convolutional layer to
 # an image without learning the parameters. We therefore initialize
 # them to random values to "simulate" learning.
-b_shp = (2,)
+b_shp = (100,)
 b = theano.shared(numpy.asarray(
             rng.uniform(low=-.5, high=.5, size=b_shp),
             dtype=input.dtype), name ='b')
@@ -34,7 +35,8 @@ b = theano.shared(numpy.asarray(
 # build symbolic expression that computes the convolution of input with filters in w
 conv_out = conv.conv2d(input, W)
 
-# build symbolic expression to add bias and apply activation function, i.e. produce neural net layer output
+# build symbolic expression to add bias and apply activation function,
+# i.e. produce neural net layer output
 # A few words on ``dimshuffle`` :
 #   ``dimshuffle`` is a powerful tool in reshaping a tensor;
 #   what it allows you to do is to shuffle dimension around
@@ -75,7 +77,7 @@ train = numpy.load('../data/SBtrainImage')
 for image in train:
     # put image in 4D tensor of shape (1, 1, height, width)
     # The shape of the tensor is as follows:
-    # [mini-batch size, number of input feature maps, image height, image width].
+    # [mini-batch size, # of input feature maps, image height, image width].
 
     img_ = image.transpose().reshape(1,1,64,64)
 
@@ -84,20 +86,20 @@ for image in train:
     from theano.tensor.signal import downsample
 
     input = T.dtensor4('input')
-    maxpool_shape = (2, 2)
+    maxpool_shape = (6, 6)
     pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True)
-    f = theano.function([input],pool_out)
+    f_out = theano.function([input],pool_out)
 
     invals = numpy.random.RandomState(1).rand(3, 2, 5, 5)
     print('With ignore_border set to True:')
     print('invals[0, 0, :, :] =\n', invals[0, 0, :, :])
-    print('output[0, 0, :, :] =\n', f(invals)[0, 0, :, :])
+    print('output[0, 0, :, :] =\n', f_out(invals)[0, 0, :, :])
 
     pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False)
     f = theano.function([input],pool_out)
     print('With ignore_border set to False:')
     print('invals[1, 0, :, :] =\n ', invals[1, 0, :, :])
-    print('output[1, 0, :, :] =\n ', f(invals)[1, 0, :, :])
+    print('output[1, 0, :, :] =\n ', f_out(invals)[1, 0, :, :])
 
     # Save max-pooling output
 
