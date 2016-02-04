@@ -9,6 +9,7 @@ class dA(object):
         numpy_rng,
         theano_rng = None,
         input = None,
+        input_batch = None,
         n_visible = 121,
         n_hidden = 100,
         Whid = None,
@@ -115,12 +116,22 @@ class dA(object):
         self.Wvis = Wvis   # the weight matrix from hidden to output (val is 121 x 100 array)
         self.bhid = bhid   # the bias vector for the hidden layer (100 x 1 array)
         self.bvis = bvis   # the bias vector for the visible layer (121 x 1 array)
-        self.theano_rng = theano_rng # what the fuck is this about
-        if input is None:  # why should input be None?!?!
+        self.theano_rng = theano_rng
+
+        # self.X is the megamatrix (number of rows = number of observations, number of cols = unrolled image size)
+        # self.Xbatch is the minibatch matrix (number of rows = number of minibatches, number of cols = unrolled mini-batch size)
+        if input is None:
             self.X = T.dmatrix(name='input')
         else:
             self.X = input
-        self.params = [self.Whid, self.bhid] # these are the parameters we are optimizing
+
+        if input_batch is None:
+            self.Xbatch = T.dmatrix(name='input_batch')
+        else:
+            self.Xbatch = input_batch
+
+        # these are the parameters we are optimizing
+        self.params = [self.Whid, self.bhid]
 
     def get_hidden_values(self, input):
         """
@@ -134,16 +145,39 @@ class dA(object):
         """
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
-    # create 10000 minibatches
-    def
-    def get_cost_updates(self, learning_rate, N):
+    # pass every minibatch through the autoencoder and calculate the y's
+    def get_cost_updates(self, learning_rate, lam):
         """
+        :type scalar
         :param learning_rate: rate which weighs the gradient step
+
+        :type scalar
+        :param lam: regularization parameter for the cost function
+
+        :type pair (cost, update)
         :return: compute cost and update for one training step of the autoencoder
         """
-        h = self.get_hidden_values(self.X)
-        y = self.get_output(h)
-        cost = 1/N * numpy.square(y-)
+        # y holds all the minibatch-processed vectors
+        y = numpy.zeros((self.Xbatch.shape[0], self.Xbatch.shape[1]))
+        for i in self.Xbatch.shape[0]:
+            # pass batch i into the autoencoder
+            h = self.get_hidden_values(self.Xbatch[i, ])
+            y[i, ] = self.get_output(h)
+
+        # Compute the cost
+        diff = y-self.Xbatch
+        cost = 1/self.Xbatch.shape[0] * numpy.trace(diff * diff.T) + lam/2*(numpy.linalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
+
+        # Compute updates
+        gparams = T.grad(cost, self.params)
+        updates = [
+            (param, param - learning_rate * gparams)
+            for param, gparam in zip(self.params, gparams)
+        ]
+        return (cost.get_value(), updates)
+
+
+
 
 # TRAIN MODEL
 train_data = da.create_batches(
