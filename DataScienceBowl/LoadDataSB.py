@@ -6,6 +6,7 @@ import numpy as np
 import dicom
 import cv2
 from LoadData import crop_resize
+import random
 import matplotlib.pyplot as plt
 
 # TODO add method for storing resulting numpy arrays as theano shared variables
@@ -98,6 +99,41 @@ def load_contours_dcm(c_path, c_series, c_imgid,
 
     return imagedata, contourdata
 
+
+    # create 10000 minibatches
+
+def get_image_batch(imagedata, batchsize, numbatches):
+
+    """
+    generates numbatches number of random batchsize ([heigth * width]) image patches for passing
+    to auto encoder layer form the downsampled images in imagedata
+
+    RETURNS: array [numbatches * batchsize[0] * batchsize[1]
+
+    """
+    imagedata_batch = []
+
+    for i in range(0, numbatches):
+
+        # get random indices required for patch size
+
+        imageid = random.randint(0, (imagedata.shape[0] - 1))
+        patch_w = random.randint(0, (imagedata.shape[1] - 12))
+        patch_h= random.randint(0, (imagedata.shape[2] - 12))
+        patch_w_r = patch_w + batchsize[0]-1
+        patch_h_r = patch_h + batchsize[1]-1
+
+        # extract current patch from imagedata
+        current_batch = np.array(imagedata[imageid, patch_w:patch_w_r+1, patch_h:patch_h_r+1])
+
+        # collect data
+        imagedata_batch.append(current_batch)
+
+    imagedata_batch = np.array(imagedata_batch)
+
+    return imagedata_batch
+
+
 # There is a manual process to map contours to images, as IDs don't match exactly. Resulting in Dic:
 
 SAX_SERIES = {
@@ -122,14 +158,23 @@ SAX_SERIES = {
 
 # Load data and store to numpy files for re-use
 
-c_path, c_series, c_imgid = get_mapping(contour_dir)
-imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                           image_dir, SAX_SERIES, crop_resize, newsize = (64, 64))
 
-# numpy pickled files will appear in data folder of directory
-# use numpy.load to access
-imagedata.dump('data/SBtrainImage')
-contourdata.dump('data/SBtrainMask')
+
+if __name__ == "__main__":
+
+    c_path, c_series, c_imgid = get_mapping(contour_dir)
+    imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
+                                               image_dir, SAX_SERIES, crop_resize, newsize=(64, 64))
+
+    imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
+
+    # numpy pickled files will appear in data folder of directory
+    # use numpy.load to access
+    imagedata.dump('data/SBtrainImage')
+    contourdata.dump('data/SBtrainMask')
+    imagedata_batch.dump('data/SBtrainImage_batch')
+
+
 
 
 
