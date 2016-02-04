@@ -71,7 +71,7 @@ class dA(object):
                 numpy_rng.uniform(  # uniform initialization of Whid
                     low = -4 * numpy.sqrt(6. / (n_hidden + n_visible)),
                     high = 4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    size = (n_hidden, n_visible) # n_hidden x n_visible matrix
+                    size = ( n_visible, n_hidden) # n_hidden x n_visible matrix
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
             )
@@ -84,7 +84,7 @@ class dA(object):
                 numpy_rng.uniform(  # uniform initialization of Whid
                     low = -4 * numpy.sqrt(6. / (n_hidden + n_visible)),
                     high = 4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    size = (n_visible, n_hidden) # n_visible x n_hiden matrix
+                    size = ( n_hidden, n_visible) # n_visible x n_hiden matrix
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
             )
@@ -146,7 +146,7 @@ class dA(object):
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
     # pass every minibatch through the autoencoder and calculate the y's
-    def get_cost_updates(self, learning_rate, lam):
+    def get_cost_updates(self, learning_rate, lam, batchdim):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -159,21 +159,21 @@ class dA(object):
         """
 
         # y holds all the minibatch-processed vectors
-        y = numpy.zeros((self.Xbatch.shape[0], self.Xbatch.shape[1]))
-        for i in self.Xbatch.shape[0]:
-            # pass batch i into the autoencoder
-            h = self.get_hidden_values(self.Xbatch[i, ])
-            y[i, ] = self.get_output(h)
+
+        h = self.get_hidden_values(self.Xbatch)
+        y = self.get_output(h)
 
         # Compute the cost
         diff = y-self.Xbatch
-        cost = 1/self.Xbatch.shape[0] * numpy.trace(diff * diff.T) + lam/2*(numpy.linalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
+
+        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), batchdim[0])
+        # + lam/2*(T.nlinalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
 
         # Compute updates
         gparams = T.grad(cost, self.params)
         updates = [
-            (param, param - learning_rate * gparams)
+            (param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)
         ]
-        return (cost, updates)
 
+        return (cost, updates)
