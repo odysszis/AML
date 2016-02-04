@@ -10,8 +10,10 @@ rng = numpy.random.RandomState(23455)
 input = T.tensor4(name='input')
 
 # initialize shared variable for weights.
-w_shp = (2, 3, 9, 9)
-w_bound = numpy.sqrt(3 * 9 * 9)
+# changed shape
+w_shp = (2, 1, 9, 9)
+# changed bound
+w_bound = numpy.sqrt(1 * 9 * 9)
 W = theano.shared( numpy.asarray(
             rng.uniform(
                 low=-1.0 / w_bound,
@@ -59,7 +61,7 @@ output = T.nnet.sigmoid(conv_out + b.dimshuffle('x', 0, 'x', 'x'))
 # create theano function to compute filtered images
 f = theano.function([input], output)
 
-import pylab
+#import pylab
 #from PIL import Image
 
 #img = Image.open(open('doc/images/3wolfmoon.jpg'))
@@ -68,14 +70,36 @@ import pylab
 
 
 # open random image of dimensions 64x48
-train = numpy.load('../data/trainIn.npy')
-train = numpy.delete(train,numpy.s_[3:480],axis=0)
-img = train / 64
-# put image in 4D tensor of shape (1, 3, height, width)
-#img_ = img.transpose(2, 0, 1).reshape(1, 3, 639, 516)
-img_ = img.transpose().reshape(1,3,64,48)
+train = numpy.load('../data/SBtrainImage')
 
-filtered_img = f(img_)
+for image in train:
+    # put image in 4D tensor of shape (1, 1, height, width)
+    # The shape of the tensor is as follows:
+    # [mini-batch size, number of input feature maps, image height, image width].
+
+    img_ = image.transpose().reshape(1,1,64,64)
+
+    filtered_img = f(img_)
+
+    from theano.tensor.signal import downsample
+
+    input = T.dtensor4('input')
+    maxpool_shape = (2, 2)
+    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True)
+    f = theano.function([input],pool_out)
+
+    invals = numpy.random.RandomState(1).rand(3, 2, 5, 5)
+    print('With ignore_border set to True:')
+    print('invals[0, 0, :, :] =\n', invals[0, 0, :, :])
+    print('output[0, 0, :, :] =\n', f(invals)[0, 0, :, :])
+
+    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False)
+    f = theano.function([input],pool_out)
+    print('With ignore_border set to False:')
+    print('invals[1, 0, :, :] =\n ', invals[1, 0, :, :])
+    print('output[1, 0, :, :] =\n ', f(invals)[1, 0, :, :])
+
+    # Save max-pooling output
 
 # plot original image and first and second components of output
 #pylab.subplot(1, 3, 1); pylab.axis('off');
@@ -87,20 +111,5 @@ filtered_img = f(img_)
 #pylab.subplot(1, 3, 3); pylab.axis('off'); pylab.imshow(filtered_img[0, 1, :, :])
 #pylab.show()
 
-from theano.tensor.signal import downsample
 
-input = T.dtensor4('input')
-maxpool_shape = (2, 2)
-pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True)
-f = theano.function([input],pool_out)
 
-invals = numpy.random.RandomState(1).rand(3, 2, 5, 5)
-print('With ignore_border set to True:')
-print('invals[0, 0, :, :] =\n', invals[0, 0, :, :])
-print('output[0, 0, :, :] =\n', f(invals)[0, 0, :, :])
-
-pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False)
-f = theano.function([input],pool_out)
-print('With ignore_border set to False:')
-print('invals[1, 0, :, :] =\n ', invals[1, 0, :, :])
-print('output[1, 0, :, :] =\n ', f(invals)[1, 0, :, :])
