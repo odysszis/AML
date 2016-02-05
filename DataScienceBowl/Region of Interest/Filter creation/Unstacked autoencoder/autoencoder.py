@@ -171,9 +171,7 @@ class dA(object):
 
         # Compute updates
         gparams = T.grad(cost, self.params)
-        updates = [
-            (param, param - learning_rate * gparam)
-            for param, gparam in zip(self.params, gparams)
-        ]
+        updates = [(param, param - learning_rate * gparam)
+            for param, gparam in zip(self.params, gparams)]
 
         return (cost, updates)
