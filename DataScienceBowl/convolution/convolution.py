@@ -71,7 +71,7 @@ f = theano.function([input], output)
 #img = numpy.asarray(img, dtype='float64') / 256.
 
 
-# open random image of dimensions 64x48
+# open random image of dimensions 64x64
 train = numpy.load('../data/SBtrainImage')
 
 for image in train:
@@ -87,7 +87,7 @@ for image in train:
 
     input = T.dtensor4('input')
     maxpool_shape = (6, 6)
-    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True)
+    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=True,mode='average_inc_pad')
     f_out = theano.function([input],pool_out)
 
     invals = numpy.random.RandomState(1).rand(3, 2, 5, 5)
@@ -95,7 +95,7 @@ for image in train:
     print('invals[0, 0, :, :] =\n', invals[0, 0, :, :])
     print('output[0, 0, :, :] =\n', f_out(invals)[0, 0, :, :])
 
-    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False)
+    pool_out = downsample.max_pool_2d(input, maxpool_shape, ignore_border=False, mode='average_inc_pad')
     f = theano.function([input],pool_out)
     print('With ignore_border set to False:')
     print('invals[1, 0, :, :] =\n ', invals[1, 0, :, :])
