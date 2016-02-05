@@ -7,7 +7,7 @@ from autoencoder import dA
 import sys
 
 
-def train_model(train_data, n_epochs, model_class, **args):
+def train_model(train_data, numbatches, n_epochs, model_class, **args):
 
     """
     trains auto-encoder model for initialising weights for the CNN layer of the model, taking as input
@@ -15,34 +15,33 @@ def train_model(train_data, n_epochs, model_class, **args):
     :param training data
     :param n_epochs: number of training iterations
     :param model_class: class of model to train
-    :param **costparams: any named inputs required by the cost function
+    :param **args: any named inputs required by the cost function
 
 
     RETURNS: final array of weights from trained model
     """
 
     traindim = train_data.shape
+    batch_size = traindim[0]/numbatches
 
     X = T.matrix('X')
-    Xbatch = T.matrix('Xbatch')
+    index = T.lscalar()
 
     train_data = theano.shared(train_data)
-
     rng = np.random.RandomState(123)
     theano_rng = RandomStreams(rng.randint(2 ** 30))
 
     model_object = model_class(numpy_rng=rng,
             theano_rng=theano_rng,
             input=X,
-            input_batch=Xbatch,
             n_visible=121,
             n_hidden=100)
 
-    cost, updates = model_object.get_cost_updates(batchdim=traindim, **args)
+    cost, updates = model_object.get_cost_updates(datadim=traindim, **args)
 
-    train_model = theano.function(inputs=[], outputs=cost, updates=updates,
-                                   givens={Xbatch: train_data})
-    start_time = timeit.default_timer()
+    train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
+                                   givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
+
 
     ############
     # TRAINING #
@@ -50,30 +49,24 @@ def train_model(train_data, n_epochs, model_class, **args):
 
     # go through training epochs
     for epoch in xrange(n_epochs):
-        c = train_model() #compute cost
-        print 'Training epoch %d, cost ' % epoch, c
-        end_time = timeit.default_timer()
-        training_time = (end_time - start_time)
+        for nindex in range(numbatches):
+            c = train_model(nindex) #compute cost
+            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
 
     params = model_object.Whid.get_value()
 
     return params
 
-
-
 if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
-    train_batch = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
-    dim = train_batch.shape
-    train_batch = np.reshape(train_batch, (dim[0], (dim[1]*dim[2])))
-    train_batch  = np.array(train_batch, dtype='float64')
+    train = np.array(train, dtype='float64')
 
-    params_final = train_model(train_data=train_batch, n_epochs = 10000, model_class = dA, learning_rate=10, lam=10^4)
+    params_final = train_model(train_data=train, numbatches = 1, n_epochs = 10000, model_class = dA, learning_rate=10, lam=10^4)
 
 
 # TODO extract and store output from dA trained instance for reuse in subsequent steps. 11*11*100
