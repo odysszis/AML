@@ -70,7 +70,7 @@ class dA(object):
                 numpy_rng.uniform(  # uniform initialization of Whid
                     low = -4 * np.sqrt(6. / (n_hidden + n_visible)),
                     high = 4 * np.sqrt(6. / (n_hidden + n_visible)),
-                    size = ( n_visible, n_hidden) # n_hidden x n_visible matrix
+                    size = (n_visible, n_hidden) # n_hidden x n_visible matrix
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
             )

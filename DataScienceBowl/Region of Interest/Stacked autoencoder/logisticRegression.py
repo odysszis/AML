@@ -72,7 +72,7 @@ class LogisticRegression(object):
 
         # symbolic description of how to compute prediction as class whose
         # probability is maximal
-        self.y_pred = T.argmax(self.p_y_given_x, axis=1)
+        self.y_pred = T.argmax(self.p_y_given_x, axis=0)
         # end-snippet-1
 
         # parameters of the model
@@ -163,17 +163,19 @@ if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.random.rand(1000, 10,10) #np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
-    trainMask = np.random.rand(1000, 64,64)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
-    dim = train.shape
-    train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
+     #np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
+    trainMask = np.random.rand(200, 64, 64)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
+    #dim = train.shape
+    #train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
+    train = np.random.rand(200, 100)
     train = np.array(train, dtype='float64')
+
 
     dim = trainMask.shape
     trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
     trainMask = np.array(trainMask, dtype='float64')
 
-    numbatches = 1
+    numbatches = 2
     batchdim = train[0]/numbatches
 
     final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
