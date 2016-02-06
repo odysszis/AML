@@ -9,7 +9,6 @@ class dA(object):
         numpy_rng,
         theano_rng = None,
         input = None,
-        input_batch = None,
         n_visible = 121,
         n_hidden = 100,
         Whid = None,
@@ -125,10 +124,6 @@ class dA(object):
         else:
             self.X = input
 
-        if input_batch is None:
-            self.Xbatch = T.dmatrix(name='input_batch')
-        else:
-            self.Xbatch = input_batch
 
         # these are the parameters we are optimizing
         self.params = [self.Whid, self.bhid]
@@ -146,7 +141,7 @@ class dA(object):
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
     # pass every minibatch through the autoencoder and calculate the y's
-    def get_cost_updates(self, learning_rate, lam, batchdim):
+    def get_cost_updates(self, datadim, learning_rate, lam):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -160,13 +155,13 @@ class dA(object):
 
         # y holds all the minibatch-processed vectors
 
-        h = self.get_hidden_values(self.Xbatch)
+        h = self.get_hidden_values(self.X)
         y = self.get_output(h)
 
         # Compute the cost
-        diff = y-self.Xbatch
+        diff = y-self.X
 
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), batchdim[0])
+        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), datadim[0])
         # + lam/2*(T.nlinalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
 
         # Compute updates
