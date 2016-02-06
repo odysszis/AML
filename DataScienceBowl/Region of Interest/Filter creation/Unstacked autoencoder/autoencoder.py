@@ -1,5 +1,5 @@
 import theano.tensor as T
-import numpy
+import numpy as np
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
 
@@ -66,10 +66,10 @@ class dA(object):
         # if no weights for the mapping from input layer to hidden layer were passed
         if not Whid:
             # Whid is initialized with initial_W which is uniformly sampled
-            initial_W = numpy.asarray(
+            initial_W = np.asarray(
                 numpy_rng.uniform(  # uniform initialization of Whid
-                    low = -4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    high = 4 * numpy.sqrt(6. / (n_hidden + n_visible)),
+                    low = -4 * np.sqrt(6. / (n_hidden + n_visible)),
+                    high = 4 * np.sqrt(6. / (n_hidden + n_visible)),
                     size = ( n_visible, n_hidden) # n_hidden x n_visible matrix
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
@@ -79,10 +79,10 @@ class dA(object):
         # if no weights for the mapping from hidden layer to output layer were passed
         if not Wvis:
             # Wvis is initialized with initial_W which is uniformly sampled
-            initial_W = numpy.asarray(
+            initial_W = np.asarray(
                 numpy_rng.uniform(  # uniform initialization of Whid
-                    low = -4 * numpy.sqrt(6. / (n_hidden + n_visible)),
-                    high = 4 * numpy.sqrt(6. / (n_hidden + n_visible)),
+                    low = -4 * np.sqrt(6. / (n_hidden + n_visible)),
+                    high = 4 * np.sqrt(6. / (n_hidden + n_visible)),
                     size = ( n_hidden, n_visible) # n_visible x n_hiden matrix
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
@@ -92,7 +92,7 @@ class dA(object):
         # if no bias for mapping from input to hidden layer is passed
         if not bhid:
             bhid = theano.shared(
-                value=numpy.zeros(
+                value=np.zeros(
                     n_hidden,                  # size
                     dtype=theano.config.floatX # GPU
                 ),
@@ -103,7 +103,7 @@ class dA(object):
         # if no bias for mapping from hidden to output layer is passed
         if not bvis:
             bvis = theano.shared(
-                value=numpy.zeros(
+                value=np.zeros(
                     n_visible,                 # size
                     dtype=theano.config.floatX # GPU
                 ),
