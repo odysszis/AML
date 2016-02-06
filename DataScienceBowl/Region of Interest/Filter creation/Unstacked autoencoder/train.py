@@ -61,12 +61,12 @@ if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
+    train = np.load('/DataScienceBowl/data/SBtrainImage_batch')
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
 
-    params_final = train_model(train_data=train, numbatches = 1, n_epochs = 10000, model_class = dA, learning_rate=10, lam=10^4)
+    params_final = train_model(train_data=train, numbatches = 5, n_epochs = 10000, model_class = dA, learning_rate=10, lam=10^4)
 
 
 # TODO extract and store output from dA trained instance for reuse in subsequent steps. 11*11*100
