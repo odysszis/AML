@@ -124,9 +124,31 @@ class dA(object):
         else:
             self.X = input
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+        if input_batch is None:
+            self.Xbatch = T.dmatrix(name='input_batch')
+        else:
+            self.Xbatch = input_batch
+>>>>>>> Stashed changes
 
         # these are the parameters we are optimizing
         self.params = [self.Whid, self.bhid]
+=======
+<<<<<<< HEAD
+
+        self.params = [self.Whid, self.bhid] # these are the parameters we are optimizing
+=======
+        if input_batch is None:
+            self.Xbatch = T.dmatrix(name='input_batch')
+        else:
+            self.Xbatch = input_batch
+
+        # these are the parameters we are optimizing
+        self.params = [self.Whid, self.bhid]
+>>>>>>> DSBC_MAX
+>>>>>>> Stashed changes
 
     def get_hidden_values(self, input):
         """
@@ -140,8 +162,21 @@ class dA(object):
         """
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
+<<<<<<< Updated upstream
     # pass every minibatch through the autoencoder and calculate the y's
+<<<<<<< Updated upstream
     def get_cost_updates(self, datadim, learning_rate, lam):
+=======
+    def get_cost_updates(self, learning_rate, lam, batchdim):
+=======
+<<<<<<< HEAD
+    def get_cost_updates(self, learning_rate, N):
+=======
+    # pass every minibatch through the autoencoder and calculate the y's
+    def get_cost_updates(self, learning_rate, lam):
+>>>>>>> DSBC_MAX
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -152,11 +187,35 @@ class dA(object):
         :type pair (cost, update)
         :return: compute cost and update for one training step of the autoencoder
         """
+<<<<<<< Updated upstream
 
         # y holds all the minibatch-processed vectors
 
         h = self.get_hidden_values(self.X)
         y = self.get_output(h)
+=======
+        # y holds all the minibatch-processed vectors
+        y = numpy.zeros((self.Xbatch.shape[0], self.Xbatch.shape[1]))
+        for i in self.Xbatch.shape[0]:
+            # pass batch i into the autoencoder
+            h = self.get_hidden_values(self.Xbatch[i, ])
+            y[i, ] = self.get_output(h)
+
+        # Compute the cost
+        diff = y-self.Xbatch
+        cost = 1/self.Xbatch.shape[0] * numpy.trace(diff * diff.T) + lam/2*(numpy.linalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
+
+        # Compute updates
+        gparams = T.grad(cost, self.params)
+        updates = [
+            (param, param - learning_rate * gparams)
+            for param, gparam in zip(self.params, gparams)
+        ]
+        return (cost, updates)
+
+
+# blabla changes
+>>>>>>> Stashed changes
 
         # Compute the cost
         diff = y-self.X
