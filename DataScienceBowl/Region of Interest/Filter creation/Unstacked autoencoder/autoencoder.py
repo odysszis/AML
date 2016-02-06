@@ -173,7 +173,7 @@ class dA(object):
 
 
 
-def train_model(train_data, numbatches, n_epochs, model_class, **args):
+def train_ac(train_data, numbatches, n_epochs, model_class, **args):
 
     """
     trains auto-encoder model for initialising weights for the CNN layer of the model, taking as input
@@ -232,9 +232,9 @@ if __name__ == "__main__":
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
     numbatches = 5
-    batchdim = train[0]/5
+    batchdim = train[0]/numbatches
 
-    params_final = train_model(train_data=train, numbatches = numbatches, n_epochs = 10000,
+    params_final = train_ac(train_data=train, numbatches = numbatches, n_epochs = 10000,
                                model_class = dA, datadim = batchdim, learning_rate=10, lam=10^4)
 
 
