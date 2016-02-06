@@ -37,7 +37,7 @@ def train_model(train_data, numbatches, n_epochs, model_class, **args):
             n_visible=121,
             n_hidden=100)
 
-    cost, updates = model_object.get_cost_updates(datadim=traindim, **args)
+    cost, updates = model_object.get_cost_updates( **args)
 
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
                                    givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
@@ -61,12 +61,15 @@ if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.load('/DataScienceBowl/data/SBtrainImage_batch')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
+    numbatches = 5
+    batchdim = train[0]/5
 
-    params_final = train_model(train_data=train, numbatches = 5, n_epochs = 10000, model_class = dA, learning_rate=10, lam=10^4)
+    params_final = train_model(train_data=train, numbatches = numbatches, n_epochs = 10000,
+                               model_class = dA, datadim = batchdim, learning_rate=10, lam=10^4)
 
 
 # TODO extract and store output from dA trained instance for reuse in subsequent steps. 11*11*100
