@@ -201,7 +201,7 @@ def train_ac(train_data, numbatches, n_epochs, model_class, **args):
             n_visible=121,
             n_hidden=100)
 
-    cost, updates = model_object.get_cost_updates( **args)
+    cost, updates = model_object.get_cost_updates(**args)
 
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
                                    givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     batchdim = train[0]/numbatches
 
     W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10,
-                               model_class=AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
+                               model_class = AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
 
     W_hid = np.array(W_hid)
     b_hid = np.array(b_hid)

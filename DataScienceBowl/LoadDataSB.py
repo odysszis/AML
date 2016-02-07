@@ -7,6 +7,7 @@ import dicom
 import cv2
 from LoadData import crop_resize
 import random
+
 import matplotlib.pyplot as plt
 
 # TODO add method for storing resulting numpy arrays as theano shared variables

@@ -151,8 +151,8 @@ if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
 
-    trainMask = np.random.rand(200, 32, 32)
-    train = np.random.rand(200, 100)
+    trainMask = np.random.rand(4000, 32, 32)
+    train = np.random.rand(4000, 100)
     train = np.array(train, dtype='float64')
 
     dim = trainMask.shape
@@ -161,8 +161,8 @@ if __name__ == "__main__":
     numbatches = 1
     batchdim = train.shape[0]/numbatches
 
-    final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
-                                            numbatches=numbatches, n_epochs=1000,
+    weights, bias = train_logreg(train_data=train, train_masks=trainMask,
+                                            numbatches=numbatches, n_epochs=10000,
                                             model_class=LogisticRegression, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
