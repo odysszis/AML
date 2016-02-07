@@ -52,9 +52,8 @@ class dA(object):
         :param bvis: Theano shared variable for the mapping from the input layer to
                      the hidden layer ( output = f(Wvis * hid * bvis)
         """
-        ######################
-        ### INITIALIZATION ###
-        ######################
+        # initialisation
+
         self.n_visible = n_visible
         self.n_hidden = n_hidden
 

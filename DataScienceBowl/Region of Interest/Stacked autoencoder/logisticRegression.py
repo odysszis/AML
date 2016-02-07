@@ -152,12 +152,9 @@ def train_logreg(train_data, train_masks, numbatches,
 
 if __name__ == "__main__":
 
-    # load sunny data and collapse to correct dim
+    # load required inputs and call training method (random data used until CNN is working)
 
-    #np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
-    trainMask = np.random.rand(200, 32, 32)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
-    #dim = train.shape
-    #train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
+    trainMask = np.random.rand(200, 32, 32)
     train = np.random.rand(200, 100)
     train = np.array(train, dtype='float64')
 
