@@ -30,7 +30,7 @@ class LogisticRegression(object):
                       which the labels lie
 
         """
-        # start-snippet-1
+
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         self.W = theano.shared(
             value=np.zeros(
@@ -50,30 +50,21 @@ class LogisticRegression(object):
             borrow=True
         )
 
+        # symbolic variables for inputs
         if masks is None:
             self.Y = T.dmatrix(name='masks')
         else:
             self.Y = masks
-
         if input is None:
             self.X = T.dmatrix(name='input')
         else:
             self.X = input
 
-        # symbolic expression for computing the matrix of class-membership
-        # probabilities
-        # Where:
-        # W is a matrix where column-k represent the separation hyperplane for
-        # class-k
-        # x is a matrix where row-j  represents input training sample-j
-        # b is a vector where element-k represent the free parameter of
-        # hyperplane-k
-        self.p_y_given_x = T.nnet.softmax(T.dot(self.X, self.W) + self.b)
+        # push through sigmoid layer to get prediction prob
+        self.p_y_given_x = T.nnet.sigmoid(T.dot(self.X, self.W) + self.b)
 
-        # symbolic description of how to compute prediction as class whose
-        # probability is maximal
-        self.y_pred = T.argmax(self.p_y_given_x, axis=1)
-        # end-snippet-1
+        # set to 1 if greater than 0.5, 0 otherwise
+        self.y_pred = T.round(self.p_y_given_x)
 
         # parameters of the model
         self.params = [self.W, self.b]
@@ -92,9 +83,9 @@ class LogisticRegression(object):
         """
 
         # Compute the cost
-        diff = self.y_pred - self.Y
+        diff = T.sub(self.Y, self.p_y_given_x)
 
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), (2*datadim[0]))
+        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), (2*datadim))
                 #+ T.nlinalg.norm(self.W)  # TODO add regularisation term
 
         # Compute updates
@@ -135,7 +126,7 @@ def train_logreg(train_data, train_masks, numbatches,
             input=X,
             masks=Y,
             n_in=100,
-            n_out=4096)
+            n_out=1024)
 
     cost, updates = model_object.get_cost_updates(**args)
 
@@ -161,23 +152,20 @@ def train_logreg(train_data, train_masks, numbatches,
 
 if __name__ == "__main__":
 
-    # load sunny data and collapse to correct dim
+    # load required inputs and call training method (random data used until CNN is working)
 
-    train = np.random.rand(1000, 10,10) #np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
-    trainMask = np.random.rand(1000, 64,64)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
-    dim = train.shape
-    train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
+    trainMask = np.random.rand(200, 32, 32)
+    train = np.random.rand(200, 100)
     train = np.array(train, dtype='float64')
 
     dim = trainMask.shape
     trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
     trainMask = np.array(trainMask, dtype='float64')
-
     numbatches = 1
-    batchdim = train[0]/numbatches
+    batchdim = train.shape[0]/numbatches
 
     final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
-                                            numbatches=numbatches, n_epochs=10000,
+                                            numbatches=numbatches, n_epochs=1000,
                                             model_class=LogisticRegression, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
