@@ -3,6 +3,8 @@ from theano import tensor as T
 import numpy as np
 import HiddenLayer
 import logisticRegression
+import autoencoder
+
 
 class sA(object):
     def __init__(
@@ -74,6 +76,13 @@ class sA(object):
                           bhid = sigmoid_layer.b,
                           Wvis = None,
                           bvis = None)
+            # add the dA_layer that represents an autoencoder at the current level i to the list of autoencoder
+            self.dA_layers.append(dA_layer)
+            # Append the parameters self.Whid, self.Wvis and self.bvis, self.bhid  of the autoencoder to the list of
+            # parameters in the stacked autoencoder
+            self.params.extend(dA_layer.params)
+            # END OF FOR LOOP
+
         # after the construction of all class instances for sigmoid_layers and autoencoders is done we add a
         # logisticregression layer to represent the output layer
         # the instance logLayer of LogisticRegression has the following fields and methods
@@ -83,16 +92,80 @@ class sA(object):
         #           - self.output
         #           - self.input <-- in constructor, this is initialized with the ouput of the last hidden (sigmoidal)
         #                            layer
-        #           -
-        self.logLayer = LogisticRegression(input = self.sigmoid_layers[-1].output,
+        self.logLayer = logisticRegression(input = self.sigmoid_layers[-1].output,
                                             n_in = hidden_layers_sizes[-1],
                                             n_out = n_outs)
         self.params.extend(self.logLayer.params)
-        self.finetune_cost = self.logLayer.cost_fn(self.y)
+        self.finetune_cost = self.logLayer.get_cost_updates(self.y)
 
-def test_sA(pretraining_epochs=15,
-            training_epochs=1000,
-            dataset,
-            batch_size=1):
-    dataset
+def train_sA(train_data, train_masks, numbatches,
+                 n_epochs, model_class, **args):
+    """
+    trains auto-encoder model for initialising weights for the CNN layer of the model, taking as input
+    random mini batches from the training images.
+    :param training data
+    :param n_epochs: number of training iterations
+    :param model_class: class of model to train
+    :param **args: any named inputs required by the cost function
 
+
+    RETURNS: final array of weights from trained model
+    """
+
+    traindim = train_data.shape
+    batch_size = traindim[0]/numbatches
+
+    X = T.matrix('X')
+    Y = T.matrix('Y')
+    index = T.lscalar()
+
+    train_data = theano.shared(train_data)
+    train_masks = theano.shared(train_masks)
+
+
+    model_object = model_class(
+            input=X,
+            masks=Y,
+            n_in=100,
+            n_out=1024)
+
+    cost, updates = model_object.get_cost_updates(**args)
+
+    train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
+                                  givens={X: train_data[index * batch_size:(index + 1) * batch_size],
+                                          Y: train_masks[index * batch_size:(index + 1) * batch_size]})
+
+
+    ############
+    # TRAINING #
+    ############
+
+    # go through training epochs
+    for epoch in xrange(n_epochs):
+        for nindex in range(numbatches):
+            c = train_model(nindex) #compute cost
+            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+
+    weights = model_object.W.get_value()
+    bias = model_object.b.get_value
+
+    return weights, bias
+
+if __name__ == "__main__":
+
+    # load required inputs and call training method (random data used until CNN is working)
+
+    trainMask = np.random.rand(200, 32, 32)
+    train = np.random.rand(200, 100)
+    train = np.array(train, dtype='float64')
+
+    dim = trainMask.shape
+    trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
+    trainMask = np.array(trainMask, dtype='float64')
+    numbatches = 1
+    batchdim = train.shape[0]/numbatches
+
+    final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
+                                            numbatches=numbatches, n_epochs=1000,
+                                            model_class=LogisticRegression, datadim=batchdim,
+                                            learning_rate=10, lam=10^4)
