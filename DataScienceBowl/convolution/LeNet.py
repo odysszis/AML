@@ -181,8 +181,9 @@ def evaluate_lenet5(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_siz
 
     # the cost we minimize during training is the NLL of the model
 
-    cost = 0.5 / batch_size * T.sum( T.sum( T.sum( layer3_output - y.flatten(2) )**2 ) )    # 20x1024 - 20x1024
-    cost += 0.9 / 2 *
+    cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y.flatten(2) )**2 )    # 20x1024 - 20x1024
+    cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    cost += 0.9 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer0.params
