@@ -159,7 +159,7 @@ class dA(object):
         y = self.get_output(h)
 
         # Compute the cost
-        diff = y-self.X
+        diff = T.sub(y, self.X)
 
         cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), datadim[0])
         # + lam/2*(T.nlinalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))

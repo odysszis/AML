@@ -83,7 +83,7 @@ class LogisticRegression(object):
         """
 
         # Compute the cost
-        diff = self.y_pred - self.Y
+        diff = T.sub(self.Y, self.p_y_given_x)
 
         cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), (2*datadim))
                 #+ T.nlinalg.norm(self.W)  # TODO add regularisation term
@@ -126,7 +126,7 @@ def train_logreg(train_data, train_masks, numbatches,
             input=X,
             masks=Y,
             n_in=100,
-            n_out=4096)
+            n_out=1024)
 
     cost, updates = model_object.get_cost_updates(**args)
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     # load sunny data and collapse to correct dim
 
     #np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage')
-    trainMask = np.random.rand(200, 64, 64)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
+    trainMask = np.random.rand(200, 32, 32)#np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask')
     #dim = train.shape
     #train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.random.rand(200, 100)
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
-                                            numbatches=numbatches, n_epochs=10000,
+                                            numbatches=numbatches, n_epochs=1000,
                                             model_class=LogisticRegression, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
