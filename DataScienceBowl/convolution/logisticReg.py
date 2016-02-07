@@ -91,7 +91,7 @@ class LogisticRegression(object):
             borrow=True
         )
 
-        self.output = T.tanh( T.dot(self.W.transpose(), input) + self.b )   # want it to be 1,024 x 1
+        self.output = T.tanh( T.dot(input, self.W.transpose()) + self.b )   # 20 x 1024
 
         # parameters of the model
         self.params = [self.W, self.b]
@@ -120,12 +120,12 @@ def load_data():
     train_set_x = np.asarray(train_set_x, dtype=theano.config.floatX)
     dim = train_set_x.shape
     train_set_x = np.reshape(train_set_x, (dim[0], (dim[1]*dim[2])) )
-    shared_x = theano.shared(train_set_x, borrow=True)                      # should be 260 x 4096
+    shared_x = theano.shared(train_set_x, borrow=True)                      # convert to 260 x 4096
 
     train_set_y = np.asarray(train_set_y, dtype=theano.config.floatX)
     dim = train_set_y.shape
     train_set_y = np.reshape(train_set_y, (dim[0], (dim[1]*dim[2])) )
-    shared_y = theano.shared(train_set_y, borrow=True)                      # should be 260 x 4096
+    shared_y = theano.shared(train_set_y, borrow=True)                      # convert to 260 x 4096
 
     rval = [(shared_x, shared_y)]
 

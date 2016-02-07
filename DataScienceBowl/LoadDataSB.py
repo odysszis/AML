@@ -164,15 +164,15 @@ if __name__ == "__main__":
 
     c_path, c_series, c_imgid = get_mapping(contour_dir)
     imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                               image_dir, SAX_SERIES, crop_resize, newsize=(64, 64))
+                                               image_dir, SAX_SERIES, crop_resize, newsize=(32, 32))
 
     imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
 
     # numpy pickled files will appear in data folder of directory
     # use numpy.load to access
-    imagedata.dump('data/SBtrainImage')
-    contourdata.dump('data/SBtrainMask')
-    imagedata_batch.dump('data/SBtrainImage_batch')
+    imagedata.dump('data/SBtrainImage32')
+    contourdata.dump('data/SBtrainMask32')
+    imagedata_batch.dump('data/SBtrainImage_batch32')
 
 
 
