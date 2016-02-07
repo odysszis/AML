@@ -158,10 +158,9 @@ class dA(object):
         y = self.get_output(h)
 
         # Compute the cost
-        diff = T.sub(y, self.X)
 
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), datadim[0])
-        # + lam/2*(T.nlinalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
+        cost = T.mean((y - self.X) ** 2) # TODO: extend with regularisation terms
+
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -230,7 +229,7 @@ if __name__ == "__main__":
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
-    numbatches = 5
+    numbatches = 1
     batchdim = train[0]/numbatches
 
     params_final = train_ac(train_data=train, numbatches = numbatches, n_epochs = 10000,

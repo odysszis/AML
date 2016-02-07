@@ -83,10 +83,7 @@ class LogisticRegression(object):
         """
 
         # Compute the cost
-        diff = T.sub(self.Y, self.p_y_given_x)
-
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), (2*datadim))
-                #+ T.nlinalg.norm(self.W)  # TODO add regularisation term
+        cost = T.mean((self.Y - self.p_y_given_x) ** 2) # TODO: extend with regularisation terms
 
         # Compute updates
         gparams = T.grad(cost, self.params)
