@@ -15,5 +15,5 @@ RUN pip install pydicom
 RUN pip install pylab Image
 
 # To build image
-# docker build -t aml-datascience bowl .
+# docker build -t aml-datascience-bowl .
 # change pyCharm Interpreter
