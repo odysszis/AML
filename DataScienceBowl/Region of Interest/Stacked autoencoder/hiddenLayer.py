@@ -10,7 +10,7 @@ import theano
 class HiddenLayer(object):
 
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
-                 activation=T.tanh):
+                 activation=theano.tensor.nnet.sigmoid):
         """
         Typical hidden layer of a MLP: units are fully-connected and have
         sigmoidal activation function. Weight matrix W is of shape (n_in,n_out)
@@ -38,18 +38,6 @@ class HiddenLayer(object):
         """
         self.input = input
 
-        # `W` is initialized with `W_values` which is uniformely sampled
-        # from sqrt(-6./(n_in+n_hidden)) and sqrt(6./(n_in+n_hidden))
-        # for tanh activation function
-        # the output of uniform if converted using asarray to dtype
-        # theano.config.floatX so that the code is runable on GPU
-        # Note : optimal initialization of weights is dependent on the
-        #        activation function used (among other things).
-        #        For example, results presented in [Xavier10] suggest that you
-        #        should use 4 times larger initial weights for sigmoid
-        #        compared to tanh
-        #        We have no info for other function, so we use the same as
-        #        tanh.
         if W is None:
             W_values = np.asarray(
                 rng.uniform(
@@ -75,4 +63,5 @@ class HiddenLayer(object):
         lin_output = T.dot(input, self.W) + self.b
         self.output = (
             lin_output if activation is None
-            else activation(lin_output))
+            else activation(lin_output)
+        )

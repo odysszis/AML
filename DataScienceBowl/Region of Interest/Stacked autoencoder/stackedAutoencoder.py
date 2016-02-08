@@ -18,9 +18,9 @@ class StackedAutoEncoder(object):
         masks,
         numpy_rng,
         theano_rng=None,
-        n_ins=784,
-        hidden_layers_sizes=[500, 500],
-        n_outs=10):
+        n_ins=4096,
+        hidden_layers_sizes=[100, 100],
+        n_outs=4096):
 
         self.sigmoid_layers = []
         self.AutoEncoder_layers = []
@@ -37,7 +37,7 @@ class StackedAutoEncoder(object):
         if input is None:
             self.X = T.dmatrix(name='input')
         else:
-            self.X = input
+            self.X = inputs
 
         for i in xrange(self.n_layers):
 
@@ -58,7 +58,7 @@ class StackedAutoEncoder(object):
                                         input=layer_input,
                                         n_in=input_size,
                                         n_out=hidden_layers_sizes[i],
-                                        activation=T.nnet.sigmoid)
+                                        activation=theano.tensor.nnet.sigmoid)
 
             # add the layer to our list of layers
             self.sigmoid_layers.append(sigmoid_layer)
@@ -133,9 +133,9 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
         masks=Y,
         numpy_rng=rng,
         theano_rng=theano_rng,
-        n_ins=784,
-        hidden_layers_sizes=[500, 500],
-        n_outs=10)
+        n_ins=4096,
+        hidden_layers_sizes=[100, 100],
+        n_outs=4096)
 
     for autoE in model_object.AutoEncoder_layers:
         # get the cost and the updates list
@@ -181,9 +181,10 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     traindim = train_data.shape
     batch_size = traindim[0]/numbatches
 
-    X = T.matrix('X')
-    Y = T.matrix('Y')
+
     index = T.lscalar()
+
+
 
     train_data = theano.shared(train_data)
     train_masks = theano.shared(train_masks)
@@ -191,8 +192,8 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     cost, updates = finetunedSA.get_cost_updates(**args)
 
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
-                                  givens={X: train_data[index * batch_size:(index + 1) * batch_size],
-                                          Y: train_masks[index * batch_size:(index + 1) * batch_size]})
+                                  givens={pretrainedSA.X: train_data[index * batch_size:(index + 1) * batch_size],
+                                          pretrainedSA.Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
     for epoch in xrange(n_epochs):
         for nindex in range(numbatches):
@@ -206,22 +207,22 @@ if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
 
-    trainMask = np.random.rand(4000, 32, 32)
-    train = np.random.rand(4000, 100)
+    trainMask = np.random.rand(1000, 64, 64)
+    train = np.random.rand(1000, 4096)
     train = np.array(train, dtype='float64')
 
     dim = trainMask.shape
     trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
     trainMask = np.array(trainMask, dtype='float64')
 
-    numbatches = 1
+    numbatches = 2
     batchdim = train.shape[0]/numbatches
 
-    pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatche =numbatches,
-                               n_epochs=10, model_class=StackedAutoEncoder, datadim=batchdim,
+    pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatches =numbatches,
+                               n_epochs=100, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
-    finetunedSA = finetune_sa(train_data =train, train_masks=trainMask, numbatche =numbatches,
-                               n_epochs=10, pretrainedSA=pretrainedSA, datadim=batchdim,
+    finetunedSA = finetune_sa(train_data =train, train_masks=trainMask, numbatches =numbatches,
+                               n_epochs=100, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
