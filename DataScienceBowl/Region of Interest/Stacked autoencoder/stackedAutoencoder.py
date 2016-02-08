@@ -185,8 +185,8 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     cost, updates = finetunedSA.get_cost_updates(**args)
 
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
-                                  givens={pretrainedSA.X: train_data[index * batch_size:(index + 1) * batch_size],
-                                          pretrainedSA.Y: train_masks[index * batch_size:(index + 1) * batch_size]})
+                                  givens={finetunedSA.X: train_data[index * batch_size:(index + 1) * batch_size],
+                                          finetunedSA.Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
     HL.iterate_epochs(n_epochs, numbatches, train_model, finetunedSA)
 
