@@ -91,10 +91,10 @@ class LogisticRegression(object):
             borrow=True
         )
 
-        self.output = T.tanh( T.dot(input, self.W.transpose()) + self.b )   # 20 x 1024
+        self.output = T.tanh( T.dot(input, self.W) + self.b )   # 20 x 1024
 
         # parameters of the model
-        self.params = [self.W, self.b]
+        self.params = [self.W, self.b]                                      # W: 1024 x 8100, b: 1024 x 1
 
         # keep track of model input
         self.input = input
@@ -115,19 +115,26 @@ def load_data():
     print('... loading data')
 
     train_set_x = np.load('../data/SBtrainImage')
-    train_set_y = np.load('../data/SBtrainMask')
+    train_set_y = np.load('../data/SBtrainMask32')
 
-    train_set_x = np.asarray(train_set_x, dtype=theano.config.floatX)
+    #print train_set_x[1,10:20,10:20]
+    #print train_set_y[1,10:20,10:20]
+
+    train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
     train_set_x = np.reshape(train_set_x, (dim[0], (dim[1]*dim[2])) )
     shared_x = theano.shared(train_set_x, borrow=True)                      # convert to 260 x 4096
 
-    train_set_y = np.asarray(train_set_y, dtype=theano.config.floatX)
+    train_set_y = np.asarray(train_set_y, dtype='float64')
     dim = train_set_y.shape
     train_set_y = np.reshape(train_set_y, (dim[0], (dim[1]*dim[2])) )
-    shared_y = theano.shared(train_set_y, borrow=True)                      # convert to 260 x 4096
+    shared_y = theano.shared(train_set_y, borrow=True)                      # convert to 260 x 1024
+    #shared_y = T.cast(shared_y, 'int64')
 
     rval = [(shared_x, shared_y)]
 
     return rval
 
+
+if __name__ == '__main__':
+    load_data()

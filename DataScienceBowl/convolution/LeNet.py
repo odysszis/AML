@@ -94,6 +94,9 @@ class LeNetConvPoolLayer(object):
         )
         # conv_out should be 30 x 100 x 54 x 54
 
+        # CHANGED
+        conv_out = T.tanh( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
+
         # downsample each feature map individually, using maxpooling
         pooled_out = downsample.max_pool_2d(
             input=conv_out,
@@ -106,7 +109,9 @@ class LeNetConvPoolLayer(object):
         # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
         # thus be broadcasted across mini-batches and feature map
         # width & height
-        self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        # CHANGED
+        #self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        self.output = pooled_out
 
         # store parameters of this layer
         self.params = [self.W, self.b]
@@ -136,7 +141,7 @@ def evaluate_lenet5(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_siz
 
     datasets = load_data()
 
-    train_set_x, train_set_y = datasets
+    train_set_x, train_set_y = datasets[0]
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
@@ -181,7 +186,7 @@ def evaluate_lenet5(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_siz
 
     # the cost we minimize during training is the NLL of the model
 
-    cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y.flatten(2) )**2 )    # 20x1024 - 20x1024
+    cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
     cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
     cost += 0.9 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
 
