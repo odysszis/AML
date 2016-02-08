@@ -11,7 +11,7 @@ import scipy.linalg.blas
 from logisticReg import LogisticRegression, load_data
 from LeNet import LeNetConvPoolLayer
 
-def pre_training(learning_rate = 0.1, nkerns = 100, batch_size = 20):
+def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 20):
 
     rng = numpy.random.RandomState(23455)
 
@@ -94,15 +94,24 @@ def pre_training(learning_rate = 0.1, nkerns = 100, batch_size = 20):
     ###############
     print('... training')
 
-    for minibatch_index in xrange(n_train_batches):
+    epoch = 0
+    done_looping = False
 
-        if minibatch_index % 100 == 0:
-            print('training @ iter = ', minibatch_index)
-        cost_ij = train_model(minibatch_index)
+    while (epoch < n_epochs) and (not done_looping):
+        epoch += 1
+        for minibatch_index in xrange(n_train_batches):
+
+            iter = (epoch - 1) * n_train_batches + minibatch_index
+
+            cost_ij = train_model(minibatch_index)
+            if iter % 100 == 0:
+                print('training @ iter = ', iter)
+                print('cost = ', cost_ij)
+
 
     print('Optimization complete.')
 
-    with open('preTrainLogReg.pickle', 'w') as f:
+    with open('logRegPreTrainParams.pickle', 'w') as f:
         pickle.dump([params], f)
 
 

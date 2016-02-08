@@ -95,7 +95,7 @@ class LeNetConvPoolLayer(object):
         # conv_out should be 30 x 100 x 54 x 54
 
         # CHANGED
-        conv_out = T.tanh( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
+        conv_out = T.nnet.sigmoid( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
 
         # downsample each feature map individually, using maxpooling
         pooled_out = downsample.max_pool_2d(
@@ -152,7 +152,7 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
     # start-snippet-1
     x = T.matrix('x')   # the data is presented as rasterized images
-    y = T.ivector('y')  # the labels are presented as 1D vector of
+    y = T.matrix('y')  # the labels are presented as 1D vector of
                         # [int] labels
 
     ######################
@@ -221,22 +221,6 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
     # TRAIN MODEL #
     ###############
     print('... training')
-    # early-stopping parameters
-    patience = 10000  # look as this many examples regardless
-    patience_increase = 2  # wait this much longer when a new best is
-                           # found
-    improvement_threshold = 0.995  # a relative improvement of this much is
-                                   # considered significant
-    validation_frequency = min(n_train_batches, patience / 2)
-                                  # go through this many
-                                  # minibatche before checking the network
-                                  # on the validation set; in this case we
-                                  # check every epoch
-
-    best_validation_loss = numpy.inf
-    best_iter = 0
-    test_score = 0.
-    start_time = timeit.default_timer()
 
     epoch = 0
     done_looping = False
@@ -251,7 +235,6 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
                 print('training @ iter = ', iter)
             cost_ij = train_model(minibatch_index)
 
-    end_time = timeit.default_timer()
     print('Optimization complete.')
 
 if __name__ == '__main__':
