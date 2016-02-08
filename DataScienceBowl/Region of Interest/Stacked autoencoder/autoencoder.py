@@ -226,7 +226,7 @@ if __name__ == "__main__":
     numbatches = 1
     batchdim = train[0]/numbatches
 
-    W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10,
+    W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10000,
                                model_class = AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
 
     W_hid = np.array(W_hid)
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     W_hid = np.transpose(W_hid)
     W_hid = np.reshape(W_hid, (W_hid.shape[0], dim[1], dim[2]))
 
-    W_two = W_hid.dump('AML/DataScienceBowl/data/CNN_inputFilters')
-    b_hid = b_hid .dump('AML/DataScienceBowl/data/CNN_inputBias')
+    W_two = W_hid.dump('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_inputFilters')
+    b_hid = b_hid .dump('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_inputBias')
 
 # TODO include regularisation terms with tensor operations

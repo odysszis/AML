@@ -197,8 +197,8 @@ if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
 
-    trainMask = np.random.rand(1000, 64, 64)
-    train = np.random.rand(1000, 4096)
+    trainMask = np.random.rand(10000, 64, 64)
+    train = np.random.rand(10000, 4096)
     train = np.array(train, dtype='float64')
 
     dim = trainMask.shape
@@ -209,10 +209,10 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatches =numbatches,
-                               n_epochs=100, model_class=StackedAutoEncoder, datadim=batchdim,
+                               n_epochs=10, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train, train_masks=trainMask, numbatches =numbatches,
-                               n_epochs=100, pretrainedSA=pretrainedSA, datadim=batchdim,
+                               n_epochs=10, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
