@@ -22,7 +22,7 @@ class LogisticRegression(object):
     determine a class membership probability.
     """
 
-    def __init__(self, input, n_in, n_out):
+    def __init__(self, input, n_in, n_out, W = None, b = None):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -38,26 +38,38 @@ class LogisticRegression(object):
                       which the labels lie
 
         """
-        # start-snippet-1
-        # initialize with 0 the weights W as a matrix of shape (batch_size, n_in, n_out)
-        self.W = theano.shared(
-            value=np.zeros(
-                (n_in, n_out),
-                dtype=theano.config.floatX
-            ),
-            name='W',
-            borrow=True
-        )
-        # initialize the biases b as a vector of n_out 0s
-        self.b = theano.shared(
-            value=np.zeros(
-                (n_out,),
-                dtype=theano.config.floatX
-            ),
-            name='b',
-            borrow=True
-        )
 
+        if W is None:
+
+            # initialize with 0 the weights W as a matrix of shape (batch_size, n_in, n_out)
+            self.W = theano.shared(
+                value=np.zeros(
+                    (n_in, n_out),
+                    dtype=theano.config.floatX
+                ),
+                name='W',
+                borrow=True
+            )
+
+        else:
+            self.W = W
+
+        if b is None:
+
+            # initialize the biases b as a vector of n_out 0s
+            self.b = theano.shared(
+                value=np.zeros(
+                    (n_out,),
+                    dtype=theano.config.floatX
+                ),
+                name='b',
+                borrow=True
+            )
+
+        else:
+            self.b = b
+
+        # output
         self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # 20 x 1024
 
         # parameters of the model
@@ -84,9 +96,6 @@ def load_data():
     train_set_x = np.load('../data/SBtrainImage')
     train_set_y = np.load('../data/SBtrainMask32')
 
-    print train_set_x[1,10:20,10:20]
-    print train_set_y[1,10:20,10:20]
-
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
     train_set_x = np.reshape(train_set_x, (dim[0], (dim[1]*dim[2])) )
@@ -105,9 +114,10 @@ def load_data():
 
 if __name__ == '__main__':
     load_data()
-    #with open('logRegPreTrainParams.pickle') as f:
-    #    params = pickle.load(f)
 
-    #weights, b = params[0]
-    #print weights.get_value(borrow=True).shape
-    #print b.get_value(borrow=True).shape
+    with open('logRegPreTrainParams.pickle') as f:
+        params = pickle.load(f)
+
+    weights, b = params[0]
+    print weights.get_value(borrow=True).shape
+    print b.get_value(borrow=True).shape

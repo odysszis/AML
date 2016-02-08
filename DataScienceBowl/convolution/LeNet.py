@@ -26,7 +26,7 @@ import sys
 import timeit
 
 import numpy
-
+import pickle
 import theano
 import theano.tensor as T
 from theano.tensor.signal import downsample
@@ -38,7 +38,7 @@ from logisticReg import LogisticRegression, load_data
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
 
-    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(6, 6)):
+    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(6, 6), W =None, b = None):
         """
         Allocate a LeNetConvPoolLayer with shared variable internal parameters.
 
@@ -65,32 +65,44 @@ class LeNetConvPoolLayer(object):
 
         # there are "num input feature maps * filter height * filter width"
         # inputs to each hidden unit
-        fan_in = numpy.prod(filter_shape[1:])
-        # each unit in the lower layer receives a gradient from:
-        # "num output feature maps * filter height * filter width" /
-        #   pooling size
-        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
-                   numpy.prod(poolsize))
-        # initialize weights with random weights
-        W_bound = numpy.sqrt(6. / (fan_in + fan_out))
-        self.W = theano.shared(
-            numpy.asarray(
-                rng.uniform(low=-W_bound, high=W_bound, size=filter_shape),
-                dtype=theano.config.floatX
-            ),
-            borrow=True
-        )
+        if W is None:
+
+            # if W are not provided by the AE, generated them randomly
+
+            fan_in = numpy.prod(filter_shape[1:])
+            #    pooling sizeeach unit in the lower layer receives a gradient from:
+            # "num output feature maps * filter height * filter width" /
+            #
+            fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
+                       numpy.prod(poolsize))
+            # initialize weights with random weights
+            W_bound = numpy.sqrt(6. / (fan_in + fan_out))
+            self.W = theano.shared(
+                numpy.asarray(
+                    rng.uniform(low=-W_bound, high=W_bound, size=filter_shape),
+                    dtype=theano.config.floatX
+                ),
+                borrow=True
+            )
+        else:
+            self.W = W
 
         # the bias is a 1D tensor -- one bias per output feature map
-        b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, borrow=True)
+        if b is None:
+
+            # if b are not provided by the AE, generate them randomly
+
+            b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
+            self.b = theano.shared(value=b_values, borrow=True)
+        else:
+            self.b = b
 
         # convolve input feature maps with filters
         conv_out = conv2d(
             input=input,
             filters=self.W,
             filter_shape=filter_shape,
-            image_shape=image_shape
+            input_shape=image_shape
         )
         # conv_out should be 30 x 100 x 54 x 54
 
@@ -170,12 +182,13 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
     # maxpooling reduces this further to (54/6, 54/6) = (9, 9)
     # 4D output tensor is thus of shape (batch_size, 100, 9, 9)
     layer0 = LeNetConvPoolLayer(
-        rng,
-        input=layer0_input,
-        filter_shape=(nkerns, 1, 11, 11),
-        image_shape=(batch_size, 1, 64, 64),                # 20 x 100 x 11 x 11
-        poolsize=(6, 6)
+        rng = rng,
+        input = layer0_input,
+        filter_shape = (nkerns, 1, 11, 11),
+        image_shape = (batch_size, 1, 64, 64),                # 20 x 100 x 11 x 11
+        poolsize = (6, 6)
     )
+    #rng, input, W, b, filter_shape, image_shape, poolsize=(6, 6)
 
     layer0_output = layer0.output.flatten(2)                # 20 x 8,100
 
@@ -184,11 +197,10 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
     layer3_output = layer3.output                           # 20 x 1024 tensor
 
-    # the cost we minimize during training is the NLL of the model
-
-    cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
-    cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
-    cost += 0.9 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
+    #cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
+    #cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    #cost += 0.9 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
+    cost = T.mean((layer3_output - y) ** 2)
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer0.params
@@ -237,6 +249,18 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
     print('Optimization complete.')
 
+
+
+def test_feed(params_path = 'logisticParams_150epochs.pickle'):
+
+    # load pre-training parameters
+    with open('logRegPreTrainParams.pickle') as f:
+        params = pickle.load(f)
+
+    log_W, log_b = params[0]
+
+
 if __name__ == '__main__':
     train_CNN()
+    #test_feed()
 
