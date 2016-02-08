@@ -2,6 +2,7 @@ import theano.tensor as T
 import numpy as np
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
+import hiddenLayer as HL
 
 class AutoEncoder(object):
     def __init__(
@@ -201,21 +202,13 @@ def train_ac(train_data, numbatches, n_epochs, model_class, **args):
             n_visible=121,
             n_hidden=100)
 
-    cost, updates = model_object.get_cost_updates( **args)
+    cost, updates = model_object.get_cost_updates(**args)
 
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
                                    givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
 
-
-    ############
-    # TRAINING #
-    ############
-
     # go through training epochs
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, model_class)
 
     W_hid = model_object.Whid.get_value()
     b_hid = model_object.bhid.get_value()
@@ -234,7 +227,7 @@ if __name__ == "__main__":
     batchdim = train[0]/numbatches
 
     W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10,
-                               model_class=AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
+                               model_class = AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
 
     W_hid = np.array(W_hid)
     b_hid = np.array(b_hid)
