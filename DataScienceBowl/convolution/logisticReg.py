@@ -117,8 +117,8 @@ def load_data():
     train_set_x = np.load('../data/SBtrainImage')
     train_set_y = np.load('../data/SBtrainMask32')
 
-    #print train_set_x[1,10:20,10:20]
-    #print train_set_y[1,10:20,10:20]
+    print train_set_x[1,10:20,10:20]
+    print train_set_y[1,10:20,10:20]
 
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
@@ -138,3 +138,12 @@ def load_data():
 
 if __name__ == '__main__':
     load_data()
+<<<<<<< be48e0dd41ef99863e86f517c205608d490ade1c
+=======
+    #with open('preTrainLogReg.pickle') as f:
+    #    params = pickle.load(f)
+
+    #weights, b = params[0]
+    #print weights.get_value(borrow=True).shape
+    #print b.get_value(borrow=True).shape
+>>>>>>> lenet and log reg

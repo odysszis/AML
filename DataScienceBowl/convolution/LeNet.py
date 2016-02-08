@@ -120,7 +120,7 @@ class LeNetConvPoolLayer(object):
         self.input = input
 
 
-def evaluate_lenet5(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20):
+def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20):
     """ Demonstrates lenet on MNIST dataset
 
     :type learning_rate: float
@@ -255,8 +255,5 @@ def evaluate_lenet5(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_siz
     print('Optimization complete.')
 
 if __name__ == '__main__':
-    evaluate_lenet5()
+    train_CNN()
 
-
-def experiment(state, channel):
-    evaluate_lenet5(state.learning_rate, dataset=state.dataset)
