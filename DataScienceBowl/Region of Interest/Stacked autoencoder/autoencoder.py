@@ -237,7 +237,7 @@ if __name__ == "__main__":
     W_hid = np.transpose(W_hid)
     W_hid = np.reshape(W_hid, (W_hid.shape[0], dim[1], dim[2]))
 
-    W_two = W_hid.dump('AML/DataScienceBowl/data/CNN_inputFilters')
-    b_hid = b_hid .dump('AML/DataScienceBowl/data/CNN_inputBias')
+    #W_two = W_hid.dump('AML/DataScienceBowl/data/CNN_inputFilters')
+    #b_hid = b_hid .dump('AML/DataScienceBowl/data/CNN_inputBias')
 
 # TODO include regularisation terms with tensor operations
