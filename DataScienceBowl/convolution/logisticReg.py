@@ -138,12 +138,9 @@ def load_data():
 
 if __name__ == '__main__':
     load_data()
-<<<<<<< be48e0dd41ef99863e86f517c205608d490ade1c
-=======
     #with open('preTrainLogReg.pickle') as f:
     #    params = pickle.load(f)
 
     #weights, b = params[0]
     #print weights.get_value(borrow=True).shape
     #print b.get_value(borrow=True).shape
->>>>>>> lenet and log reg
