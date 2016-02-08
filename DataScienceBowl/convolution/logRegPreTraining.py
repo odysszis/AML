@@ -62,10 +62,9 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     # cost for pre training
 
-    # the cost we minimize during training is the NLL of the model
-
-    cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
-    cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    #cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
+    #cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    cost = T.mean((layer3_output - y) ** 2)
 
     # parameters to be updated
 
@@ -95,18 +94,15 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     print('... training')
 
     epoch = 0
-    done_looping = False
 
-    while (epoch < n_epochs) and (not done_looping):
+    while (epoch < n_epochs):
         epoch += 1
         for minibatch_index in xrange(n_train_batches):
 
-            iter = (epoch - 1) * n_train_batches + minibatch_index
-
             cost_ij = train_model(minibatch_index)
-            if iter % 100 == 0:
-                print('training @ iter = ', iter)
-                print('cost = ', cost_ij)
+            print '\nepoch = %s' % epoch
+            print 'batch = %s' % minibatch_index
+            print 'cost = %s' % cost_ij
 
 
     print('Optimization complete.')
@@ -115,5 +111,12 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
         pickle.dump([params], f)
 
 
+#def test_images():
+
+
+
+
 if __name__ == '__main__':
-    pre_training()
+    pre_training(batch_size=260)
+
+    #test_images()
