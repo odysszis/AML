@@ -74,7 +74,7 @@ class StackedAutoEncoder(object):
                           bhid=sigmoid_layer.b)
             self.AutoEncoder_layers.append(AutoEncoder_layer)
 
-                    # We now need to add a logistic layer on top of the MLP
+        # We now need to add a logistic layer on top of the MLP
         self.logLayer = LR.LogisticRegression(
             input=self.sigmoid_layers[-1].output,
             masks=self.Y,
@@ -110,7 +110,7 @@ class StackedAutoEncoder(object):
 
 
 def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **args):
-    '''
+    '''_
         Pretrains stacked autoencoder
     '''
 
@@ -146,11 +146,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
             outputs=cost,
             updates=updates,
             givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
-
-        for epoch in xrange(n_epochs):
-            for nindex in range(numbatches):
-                c = train_model(nindex) #compute cost
-                print 'Auto Encode Training epoch %d, batchId, cost' % epoch, nindex, c
+        HL.iterate_epochs(n_epochs, numbatches, train_model, autoE)
 
     logReg = model_object.logLayer
     logcost, logupdates = logReg.get_cost_updates(**args)
@@ -161,10 +157,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
             givens={X: train_data[index * batch_size:(index + 1) * batch_size],
                     Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Log Reg Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, logReg)
 
 
     return model_object
@@ -195,10 +188,7 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
                                   givens={pretrainedSA.X: train_data[index * batch_size:(index + 1) * batch_size],
                                           pretrainedSA.Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, finetunedSA)
 
     return finetunedSA
 
@@ -215,7 +205,7 @@ if __name__ == "__main__":
     trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
     trainMask = np.array(trainMask, dtype='float64')
 
-    numbatches = 2
+    numbatches = 1
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatches =numbatches,

@@ -3,6 +3,7 @@ import numpy as np
 import timeit
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
+import hiddenLayer as HL
 
 
 class LogisticRegression(object):
@@ -131,16 +132,8 @@ def train_logreg(train_data, train_masks, numbatches,
                                   givens={X: train_data[index * batch_size:(index + 1) * batch_size],
                                           Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
-
-    ############
-    # TRAINING #
-    ############
-
     # go through training epochs
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, model_class)
 
     weights = model_object.W.get_value()
     bias = model_object.b.get_value

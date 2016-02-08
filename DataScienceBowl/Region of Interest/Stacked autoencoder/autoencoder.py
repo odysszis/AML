@@ -2,6 +2,7 @@ import theano.tensor as T
 import numpy as np
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
+import hiddenLayer as HL
 
 class AutoEncoder(object):
     def __init__(
@@ -206,16 +207,8 @@ def train_ac(train_data, numbatches, n_epochs, model_class, **args):
     train_model = theano.function(inputs=[index], outputs=cost, updates=updates,
                                    givens={X: train_data[index * batch_size:(index + 1) * batch_size]})
 
-
-    ############
-    # TRAINING #
-    ############
-
     # go through training epochs
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, model_class)
 
     W_hid = model_object.Whid.get_value()
     b_hid = model_object.bhid.get_value()

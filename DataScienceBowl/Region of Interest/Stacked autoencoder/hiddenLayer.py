@@ -65,3 +65,19 @@ class HiddenLayer(object):
             lin_output if activation is None
             else activation(lin_output)
         )
+
+
+def iterate_epochs(n_epochs, numbatches, train_fn, model_class):
+    '''_
+        runs through training epochs for a given theano function
+    '''
+    print '######------------TRAINING MODEL %s, ' % model_class
+    for epoch in xrange(n_epochs):
+        for nindex in range(numbatches):
+            c = train_fn(nindex) #compute cost
+            print 'Training epoch %d,' % epoch
+            print 'Batch id %s,' % nindex
+            print 'Cost %s,' % c
+
+            print '----------------------------'
+            print '----------------------------'
