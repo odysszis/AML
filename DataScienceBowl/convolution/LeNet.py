@@ -2,7 +2,6 @@
 import os
 import sys
 import timeit
-import pylab
 import numpy
 import pickle
 import theano
@@ -16,7 +15,7 @@ from logisticReg import LogisticRegression, load_data
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
 
-    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(6, 6), W =None, b = None):
+    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(6, 6), W = None, b = None):
         """
         Allocate a LeNetConvPoolLayer with shared variable internal parameters.
 
@@ -36,19 +35,25 @@ class LeNetConvPoolLayer(object):
 
         :type poolsize: tuple or list of length 2
         :param poolsize: the downsampling (pooling) factor (#rows, #cols)
+
+        :type W: tensor with size of filter_shape
+        :param W: filter weights
+
+        :type b: tensor of length (filter_shape[0],)
+        :param b: bias term of each convolution
         """
 
         assert image_shape[1] == filter_shape[1]
         self.input = input
 
-        # there are "num input feature maps * filter height * filter width"
-        # inputs to each hidden unit
+        # load filter weights
+
         if W is None:
 
-            # if W are not provided by the AE, generated them randomly
+            # if W are not provided, generated them randomly
 
             fan_in = numpy.prod(filter_shape[1:])
-            #    pooling sizeeach unit in the lower layer receives a gradient from:
+            #    pooling size each unit in the lower layer receives a gradient from:
             # "num output feature maps * filter height * filter width" /
             #
             fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
@@ -65,10 +70,10 @@ class LeNetConvPoolLayer(object):
         else:
             self.W = W
 
-        # the bias is a 1D tensor -- one bias per output feature map
+        # load bias
         if b is None:
 
-            # if b are not provided by the AE, generate them randomly
+            # if b are not provided, generate them randomly
 
             b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
             self.b = theano.shared(value=b_values, borrow=True)
@@ -84,7 +89,7 @@ class LeNetConvPoolLayer(object):
         )
         # conv_out should be 30 x 100 x 54 x 54
 
-        # CHANGED
+        # apply sigmoid before pooling
         conv_out = T.nnet.sigmoid( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
 
         # downsample each feature map individually, using maxpooling
@@ -95,12 +100,6 @@ class LeNetConvPoolLayer(object):
         )
         # pooled_out should be 30 x 100 x 9 x 9
 
-        # add the bias term. Since the bias is a vector (1D array), we first
-        # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
-        # thus be broadcasted across mini-batches and feature map
-        # width & height
-        # CHANGED
-        #self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
         self.output = pooled_out
 
         # store parameters of this layer
@@ -110,7 +109,7 @@ class LeNetConvPoolLayer(object):
         self.input = input
 
 
-def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20):
+def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20):
     """ Demonstrates lenet on MNIST dataset
 
     :type learning_rate: float
@@ -120,11 +119,11 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
     :type n_epochs: int
     :param n_epochs: maximal number of epochs to run the optimizer
 
-    :type dataset: string
-    :param dataset: path to the dataset used for training /testing (MNIST here)
+    :type nkerns: int
+    :param nkerns: number of convolution layer filters (kernels)
 
-    :type nkerns: list of ints
-    :param nkerns: number of kernels on each layer
+    :type batch_size: int
+    :param batch_size: size of batch in which the data are passed to the model
     """
 
     rng = numpy.random.RandomState(23455)
@@ -229,9 +228,35 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
 
 
-def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
+def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inputFilters_path = None, CNN_inputBias_path = None):
 
-    # logistic layer pre-training parameters
+    ######################
+    #   INITIALIZATIONS  #
+    ######################
+
+    # load Auto-encoder pre-trained bias
+    if CNN_inputBias_path is None:
+        b_CNN_input = None
+    else:
+        b_CNN_input = theano.shared(
+            value=numpy.load(CNN_inputBias_path),       # b is 100 x 1, is ok
+            name='b_CNN_input',
+            borrow = True
+        )
+
+    # load Auto-encoder pre-trained filter weights
+    if CNN_inputFilters_path is None:
+        W_CNN_input = None
+    else:
+        W = numpy.load(CNN_inputFilters_path)
+        W_4D_tensor = numpy.reshape(W, (100,1,11,11))
+        W_CNN_input = theano.shared(
+            value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
+            name='W_CNN_input',
+            borrow = True
+        )
+
+    # load logistic layer pre-training parameters
     if logistic_params_path is None:
         W_logistic = None
         b_logistic = None
@@ -242,6 +267,7 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
         print type(W_logistic), type(b_logistic)
 
     rng = numpy.random.RandomState(23455)
+
     # load data
     datasets = load_data()
     train_set_x, train_set_y = datasets[0]
@@ -252,15 +278,21 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
     index = T.lscalar()
     x = T.matrix('x')
     y = T.matrix('y')
+
+    # Convolution + Pooling Layer
     layer0_input = x.reshape((batch_size, 1, 64, 64))
     layer0 = LeNetConvPoolLayer(                                                    # cnn + pooling
         rng = rng,
         input = layer0_input,
         filter_shape = (nkerns, 1, 11, 11),
         image_shape = (batch_size, 1, 64, 64),
-        poolsize = (6, 6)
+        poolsize = (6, 6),
+        W = W_CNN_input,
+        b = b_CNN_input
     )
     layer0_output = layer0.output.flatten(2)
+
+    # Logistic Regression Layer
     layer3 = LogisticRegression(                                                    # logistic
         input = layer0_output, n_in = 8100, n_out = 1024,
         W = W_logistic, b = b_logistic
@@ -276,9 +308,10 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
     im_out = predict_model(0)
     print im_out.shape
     im_out = numpy.reshape(im_out, (32,32))
-    pylab.imshow(img)
 
 if __name__ == '__main__':
-    #train_CNN()
-    predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle')
+    #fine_tuning()
+    predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle',
+            CNN_inputFilters_path='../data/CNN_inputFilters',
+            CNN_inputBias_path='../data/CNN_inputBias')
 
