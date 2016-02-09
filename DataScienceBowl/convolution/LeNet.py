@@ -3,7 +3,8 @@ import os
 import sys
 import timeit
 import logging
-import pylab
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy
 import pickle
 import theano
@@ -12,6 +13,8 @@ from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv2d
 
 from logisticReg import LogisticRegression, load_data
+
+matplotlib.use('Agg')
 
 logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
 
@@ -279,7 +282,9 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
     im_out = predict_model(0)
     print im_out.shape
     im_out = numpy.reshape(im_out, (32,32))
-    pylab.imshow(im_out)
+    plt.plot(im_out)
+    plt.savefig('./output.png')
+    print "ok done"
 
 if __name__ == '__main__':
     #train_CNN()
