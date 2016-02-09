@@ -4,8 +4,8 @@ import sys
 import timeit
 import logging
 
-import matplotlib
-import matplotlib.pyplot as plt
+#import matplotlib
+#import matplotlib.pyplot as plt
 
 import numpy
 import pickle
@@ -16,7 +16,7 @@ from theano.tensor.nnet import conv2d
 
 from logisticReg import LogisticRegression, load_data
 
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 
 logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
 
@@ -126,7 +126,8 @@ class LeNetConvPoolLayer(object):
         self.input = input
 
 
-def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20):
+def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 260,
+                logistic_params_path = None, CNN_inputFilters_path = None, CNN_inputBias_path = None):
     """ Demonstrates lenet on MNIST dataset
 
     :type learning_rate: float
@@ -147,12 +148,42 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 
     #   INITIALIZATIONS  #
     ######################
 
+    # load Auto-encoder pre-trained bias
+    if CNN_inputBias_path is None:
+        b_CNN_input = None
+    else:
+        b_CNN_input = theano.shared(
+            value=numpy.load(CNN_inputBias_path),       # b is 100 x 1, is ok
+            name='b_CNN_input',
+            borrow = True
+        )
+
+    # load Auto-encoder pre-trained filter weights
+    if CNN_inputFilters_path is None:
+        W_CNN_input = None
+    else:
+        W = numpy.load(CNN_inputFilters_path)
+        W_4D_tensor = numpy.reshape(W, (100,1,11,11))
+        W_CNN_input = theano.shared(
+            value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
+            name='W_CNN_input',
+            borrow = True
+        )
+
+    # load logistic layer pre-training parameters
+    if logistic_params_path is None:
+        W_logistic = None
+        b_logistic = None
+    else:
+        with open(logistic_params_path) as f:
+            params = pickle.load(f)
+        W_logistic, b_logistic = params[0]
+
     rng = numpy.random.RandomState(23455)
 
+    # load data set
     datasets = load_data()
-
     train_set_x, train_set_y = datasets[0]
-
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
     n_train_batches /= batch_size                                           # 13
@@ -184,14 +215,22 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 
         input = layer0_input,
         filter_shape = (nkerns, 1, 11, 11),
         image_shape = (batch_size, 1, 64, 64),                # 20 x 100 x 11 x 11
-        poolsize = (6, 6)
+        poolsize = (6, 6),
+        W = W_CNN_input,
+        b = b_CNN_input
     )
     #rng, input, W, b, filter_shape, image_shape, poolsize=(6, 6)
 
     layer0_output = layer0.output.flatten(2)                # 20 x 8,100
 
     # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input = layer0_output, n_in = 8100, n_out = 1024)
+    layer3 = LogisticRegression(
+        input = layer0_output,
+        n_in = 8100,
+        n_out = 1024,
+        W = W_logistic,
+        b = b_logistic
+    )
 
     layer3_output = layer3.output                           # 20 x 1024 tensor
 
@@ -230,26 +269,27 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 
     ###############
     # TRAIN MODEL #
     ###############
-    print('... training')
+    print('... fine tuning')
 
     epoch = 0
-    done_looping = False
-
-    while (epoch < n_epochs) and (not done_looping):
-        epoch = epoch + 1
+    while (epoch < n_epochs):
+        epoch += 1
         for minibatch_index in xrange(n_train_batches):
 
-            iter = (epoch - 1) * n_train_batches + minibatch_index
-
-            if iter % 100 == 0:
-                print('training @ iter = ', iter)
             cost_ij = train_model(minibatch_index)
+            print '\nepoch = %s' % epoch
+            print 'batch = %s' % minibatch_index
+            print 'cost = %s' % cost_ij
 
     print('Optimization complete.')
 
+    with open('fine_tune.pickle', 'w') as f:
+        pickle.dump([params], f)
 
 
-def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inputFilters_path = None, CNN_inputBias_path = None):
+
+def predict(nkerns = 100, batch_size = 260, logistic_params_path = None,
+            CNN_inputFilters_path = None, CNN_inputBias_path = None):
 
     ######################
     #   INITIALIZATIONS  #
@@ -282,10 +322,9 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inpu
         W_logistic = None
         b_logistic = None
     else:
-        with open('logRegPreTrainParams.pickle') as f:
+        with open(logistic_params_path) as f:
             params = pickle.load(f)
         W_logistic, b_logistic = params[0]
-        print type(W_logistic), type(b_logistic)
 
     rng = numpy.random.RandomState(23455)
 
@@ -307,7 +346,7 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inpu
 
     # Convolution + Pooling Layer
     layer0_input = x.reshape((batch_size, 1, 64, 64))
-    layer0 = LeNetConvPoolLayer(                                                    # cnn + pooling
+    layer0 = LeNetConvPoolLayer(
         rng = rng,
         input = layer0_input,
         filter_shape = (nkerns, 1, 11, 11),
@@ -319,9 +358,12 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inpu
     layer0_output = layer0.output.flatten(2)
 
     # Logistic Regression Layer
-    layer3 = LogisticRegression(                                                    # logistic
-        input = layer0_output, n_in = 8100, n_out = 1024,
-        W = W_logistic, b = b_logistic
+    layer3 = LogisticRegression(
+        input = layer0_output,
+        n_in = 8100,
+        n_out = 1024,
+        W = W_logistic,
+        b = b_logistic
     )
     predict_model = theano.function(
         inputs = [index],
@@ -334,13 +376,19 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inpu
     im_out = predict_model(0)
     print im_out.shape
     im_out = numpy.reshape(im_out, (32,32))
-    plt.plot(im_out)
-    plt.savefig('./output.png')
-    print "saved output.png to file"
+    #plt.plot(im_out)
+    #plt.savefig('./output.png')
+    #print "saved output.png to file"
 
 if __name__ == '__main__':
-    #fine_tuning()
-    predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle',
-            CNN_inputFilters_path='../data/CNN_inputFilters',
-            CNN_inputBias_path='../data/CNN_inputBias')
+    fine_tuning(
+        n_epochs=150,
+        batch_size=20,
+        logistic_params_path = 'logisticParams_150epochs.pickle',       # GO TO CHANGE THIS ONE
+        CNN_inputFilters_path = '../data/CNN_inputFilters',
+        CNN_inputBias_path = '../data/CNN_inputBias'
+    )
+    #predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle',
+    #        CNN_inputFilters_path='../data/CNN_inputFilters',
+    #        CNN_inputBias_path='../data/CNN_inputBias')
 

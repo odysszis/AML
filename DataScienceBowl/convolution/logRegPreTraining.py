@@ -8,7 +8,7 @@ import theano.tensor as T
 from logisticReg import LogisticRegression, load_data
 from LeNet import LeNetConvPoolLayer
 
-def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 20, CNN_inputFilters_path = None, CNN_inputBias_path = None):
+def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 260, CNN_inputFilters_path = None, CNN_inputBias_path = None):
 
     ######################
     #   INITIALIZATIONS  #
@@ -120,7 +120,7 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     print('Optimization complete.')
 
-    with open('logisticParams150.pickle', 'w') as f:
+    with open('logistic150.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
