@@ -1,30 +1,8 @@
-"""This tutorial introduces the LeNet5 neural network architecture
-using Theano.  LeNet5 is a convolutional neural network, good for
-classifying images. This tutorial shows how to build the architecture,
-and comes with all the hyper-parameters you need to reproduce the
-paper's MNIST results.
 
-
-This implementation simplifies the model in the following ways:
-
- - LeNetConvPool doesn't implement location-specific gain and bias parameters
- - LeNetConvPool doesn't implement pooling by average, it implements pooling
-   by max.
- - Digit classification is implemented with a logistic regression rather than
-   an RBF network
- - LeNet5 was not fully-connected convolutions at second layer
-
-References:
- - Y. LeCun, L. Bottou, Y. Bengio and P. Haffner:
-   Gradient-Based Learning Applied to Document
-   Recognition, Proceedings of the IEEE, 86(11):2278-2324, November 1998.
-   http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
-
-"""
 import os
 import sys
 import timeit
-
+import pylab
 import numpy
 import pickle
 import theano
@@ -157,7 +135,7 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
-    n_train_batches /= batch_size                                           # 130
+    n_train_batches /= batch_size                                           # 13
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
@@ -251,16 +229,56 @@ def train_CNN(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 20
 
 
 
-def test_feed(params_path = 'logisticParams_150epochs.pickle'):
+def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
 
-    # load pre-training parameters
-    with open('logRegPreTrainParams.pickle') as f:
-        params = pickle.load(f)
+    # logistic layer pre-training parameters
+    if logistic_params_path is None:
+        W_logistic = None
+        b_logistic = None
+    else:
+        with open('logRegPreTrainParams.pickle') as f:
+            params = pickle.load(f)
+        W_logistic, b_logistic = params[0]
+        print type(W_logistic), type(b_logistic)
 
-    log_W, log_b = params[0]
+    rng = numpy.random.RandomState(23455)
+    # load data
+    datasets = load_data()
+    train_set_x, train_set_y = datasets[0]
+    n_train_batches = train_set_x.get_value(borrow=True).shape[0]
+    n_train_batches /= batch_size
+    # build model
+    print('... building the model')
+    index = T.lscalar()
+    x = T.matrix('x')
+    y = T.matrix('y')
+    layer0_input = x.reshape((batch_size, 1, 64, 64))
+    layer0 = LeNetConvPoolLayer(                                                    # cnn + pooling
+        rng = rng,
+        input = layer0_input,
+        filter_shape = (nkerns, 1, 11, 11),
+        image_shape = (batch_size, 1, 64, 64),
+        poolsize = (6, 6)
+    )
+    layer0_output = layer0.output.flatten(2)
+    layer3 = LogisticRegression(                                                    # logistic
+        input = layer0_output, n_in = 8100, n_out = 1024,
+        W = W_logistic, b = b_logistic
+    )
+    predict_model = theano.function(
+        inputs = [index],
+        outputs=layer3.output,
+        givens={
+            x: train_set_x[index * batch_size: (index + 1) * batch_size]
+        }
+    )
 
+    im_out = predict_model(0)
+    print im_out.shape
+    im_out = numpy.reshape(im_out, (32,32))
+    pylab.imshow(img)
 
 if __name__ == '__main__':
-    train_CNN()
-    #test_feed()
+    #train_CNN()
+    predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle')
 
