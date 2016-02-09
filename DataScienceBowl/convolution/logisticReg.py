@@ -37,6 +37,11 @@ class LogisticRegression(object):
         :param n_out: number of output units, the dimension of the space in
                       which the labels lie
 
+        :type W: tensor of size
+        :param n_out: number of output units, the dimension of the space in
+
+        :type n_out: int
+        :param n_out: number of output units, the dimension of the space in
         """
 
         if W is None:
