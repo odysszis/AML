@@ -94,7 +94,7 @@ class LeNetConvPoolLayer(object):
             input=conv_out,
             ds=poolsize,
             ignore_border=True,
-            mode=average_exc_pad
+            mode='average_exc_pad'
         )
         # pooled_out should be 30 x 100 x 9 x 9
         # no padding to preserve shape
