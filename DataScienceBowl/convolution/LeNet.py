@@ -3,7 +3,6 @@ import os
 import sys
 import timeit
 import logging
-import pylab
 import numpy
 import pickle
 import theano
@@ -137,6 +136,10 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 200, nkerns = 100, batch_size = 
     :type batch_size: int
     :param batch_size: size of batch in which the data are passed to the model
     """
+
+    ######################
+    #   INITIALIZATIONS  #
+    ######################
 
     rng = numpy.random.RandomState(23455)
 
@@ -285,6 +288,11 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None, CNN_inpu
     train_set_x, train_set_y = datasets[0]
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
     n_train_batches /= batch_size
+
+    ###############
+    # BUILD MODEL #
+    ###############
+
     # build model
     print('... building the model')
     index = T.lscalar()
