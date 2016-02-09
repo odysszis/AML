@@ -2,6 +2,7 @@
 import os
 import sys
 import timeit
+import logging
 import pylab
 import numpy
 import pickle
@@ -12,6 +13,7 @@ from theano.tensor.nnet import conv2d
 
 from logisticReg import LogisticRegression, load_data
 
+logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
 
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
@@ -91,10 +93,11 @@ class LeNetConvPoolLayer(object):
         pooled_out = downsample.max_pool_2d(
             input=conv_out,
             ds=poolsize,
-            ignore_border=True
+            ignore_border=True,
+            mode=average_exc_pad
         )
         # pooled_out should be 30 x 100 x 9 x 9
-
+        # no padding to preserve shape
         # add the bias term. Since the bias is a vector (1D array), we first
         # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
         # thus be broadcasted across mini-batches and feature map
@@ -276,7 +279,7 @@ def predict(nkerns = 100, batch_size = 20, logistic_params_path = None):
     im_out = predict_model(0)
     print im_out.shape
     im_out = numpy.reshape(im_out, (32,32))
-    pylab.imshow(img)
+    pylab.imshow(im_out)
 
 if __name__ == '__main__':
     #train_CNN()
