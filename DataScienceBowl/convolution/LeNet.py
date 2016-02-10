@@ -275,7 +275,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
     print('Optimization complete.')
 
-    with open('fine_tune.pickle', 'w') as f:
+    with open('../data/fine_tune_params.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
@@ -347,20 +347,13 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
-    with open('predictions.pickle', 'wb') as f:
+    with open('../data/predictions_CNN.pickle', 'wb') as f:
         pickle.dump(images, f)
 
-    #im_out = predict_model(0)
-    #print im_out.shape
-    #print im_out[0,500:550]
-    #im_out = numpy.reshape(im_out, (32,32))
-    #plt.plot(im_out)
-    #plt.savefig('./output.png')
-    #print "saved output.png to file"
 
 if __name__ == '__main__':
     # call the following method for fine tuning after pre-training the logistic regression layer
-    #fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = 'logistic1000.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
+    #fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_params.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
     # call this method to predict outcome after fine tuning
-    predict(batch_size=1, fine_tuned_params_path = 'fine_tune.pickle')
+    predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_params.pickle')
 

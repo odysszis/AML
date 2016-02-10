@@ -115,14 +115,3 @@ def load_data():
     rval = [(shared_x, shared_y)]
 
     return rval
-
-
-if __name__ == '__main__':
-    load_data()
-
-    with open('logRegPreTrainParams.pickle') as f:
-        params = pickle.load(f)
-
-    weights, b = params[0]
-    print weights.get_value(borrow=True).shape
-    print b.get_value(borrow=True).shape
