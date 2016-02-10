@@ -2,4 +2,5 @@
 *.zip
 .idea/
 *.npy
+*.pickle
 .python-version

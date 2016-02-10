@@ -7,6 +7,7 @@ import dicom
 import cv2
 from LoadData import crop_resize
 import random
+
 import matplotlib.pyplot as plt
 
 # TODO add method for storing resulting numpy arrays as theano shared variables
@@ -73,10 +74,10 @@ def load_contours_dcm(c_path, c_series, c_imgid,
 
     for i in range(0, len(c_series)):
 
-        file = "IM-%s-%s.dcm" % (training_dic[c_series[i]], c_imgid[i])  #From caffe tutorial; builds image path based on ID returned from contour
+        file = "IM-%s-%s.dcm" % (training_dic[c_series[i]], c_imgid[i])  #Builds image path based on ID returned from contour
         path = os.path.join(image_dir, c_series[i], file)
         current_image = dicom.read_file(path)
-        current_image = current_image.pixel_array.astype(float)/np.max(current_image.pixel_array) #between 0 and 1
+        current_image = current_image.pixel_array.astype(float)
 
         contour = np.loadtxt(c_path[i], delimiter=" ").astype(np.int)
         mask = np.zeros_like(current_image, dtype="uint8")
@@ -85,6 +86,7 @@ def load_contours_dcm(c_path, c_series, c_imgid,
         #further preprocess image by passed method preprocess
         current_image = preprocess(current_image, **args)
         mask = preprocess(mask, **args)
+        current_image = np.true_divide(current_image,255)
 
 
         #collect data
@@ -134,6 +136,11 @@ def get_image_batch(imagedata, batchsize, numbatches):
     return imagedata_batch
 
 
+
+
+
+
+
 # There is a manual process to map contours to images, as IDs don't match exactly. Resulting in Dic:
 
 SAX_SERIES = {
@@ -164,15 +171,18 @@ if __name__ == "__main__":
 
     c_path, c_series, c_imgid = get_mapping(contour_dir)
     imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                               image_dir, SAX_SERIES, crop_resize, newsize=(64, 64))
+                                               image_dir, SAX_SERIES, crop_resize, newsize=(256, 256))
 
     imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
 
+    binaryMasks
+
     # numpy pickled files will appear in data folder of directory
     # use numpy.load to access
-    imagedata.dump('data/SBtrainImage')
-    contourdata.dump('data/SBtrainMask')
-    imagedata_batch.dump('data/SBtrainImage_batch')
+    imagedata.dump('data/SBtrainImage256')
+    contourdata.dump('data/SBtrainMask256')
+    #imagedata_batch.dump('data/SBtrainImage_batch11from64')
+
 
 
 

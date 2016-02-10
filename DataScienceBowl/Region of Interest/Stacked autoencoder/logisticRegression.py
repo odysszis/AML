@@ -3,6 +3,7 @@ import numpy as np
 import timeit
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
+import hiddenLayer as HL
 
 
 class LogisticRegression(object):
@@ -83,10 +84,7 @@ class LogisticRegression(object):
         """
 
         # Compute the cost
-        diff = T.sub(self.Y, self.p_y_given_x)
-
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), (2*datadim))
-                #+ T.nlinalg.norm(self.W)  # TODO add regularisation term
+        cost = T.mean((self.Y - self.p_y_given_x) ** 2) # TODO: extend with regularisation terms
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -134,16 +132,8 @@ def train_logreg(train_data, train_masks, numbatches,
                                   givens={X: train_data[index * batch_size:(index + 1) * batch_size],
                                           Y: train_masks[index * batch_size:(index + 1) * batch_size]})
 
-
-    ############
-    # TRAINING #
-    ############
-
     # go through training epochs
-    for epoch in xrange(n_epochs):
-        for nindex in range(numbatches):
-            c = train_model(nindex) #compute cost
-            print 'Training epoch %d, batchId, cost' % epoch, nindex, c
+    HL.iterate_epochs(n_epochs, numbatches, train_model, model_class)
 
     weights = model_object.W.get_value()
     bias = model_object.b.get_value
@@ -154,8 +144,8 @@ if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
 
-    trainMask = np.random.rand(200, 32, 32)
-    train = np.random.rand(200, 100)
+    trainMask = np.random.rand(4000, 32, 32)
+    train = np.random.rand(4000, 100)
     train = np.array(train, dtype='float64')
 
     dim = trainMask.shape
@@ -164,8 +154,8 @@ if __name__ == "__main__":
     numbatches = 1
     batchdim = train.shape[0]/numbatches
 
-    final_weights, final_bias = train_logreg(train_data=train, train_masks=trainMask,
-                                            numbatches=numbatches, n_epochs=1000,
+    weights, bias = train_logreg(train_data=train, train_masks=trainMask,
+                                            numbatches=numbatches, n_epochs=10000,
                                             model_class=LogisticRegression, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 

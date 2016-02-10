@@ -3,7 +3,7 @@ import numpy as np
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
 
-class dA(object):
+class AutoEncoder(object):
     def __init__(
         self,
         numpy_rng,
@@ -158,10 +158,9 @@ class dA(object):
         y = self.get_output(h)
 
         # Compute the cost
-        diff = T.sub(y, self.X)
 
-        cost = T.true_div(T.nlinalg.trace(T.mul(diff, diff)), datadim[0])
-        # + lam/2*(T.nlinalg.norm(self.Wvis, ord='fro') + numpy.linalg.norm(self.Whid, ord='fro'))
+        cost = T.mean((y - self.X) ** 2) # TODO: extend with regularisation terms
+
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -218,9 +217,10 @@ def train_ac(train_data, numbatches, n_epochs, model_class, **args):
             c = train_model(nindex) #compute cost
             print 'Training epoch %d, batchId, cost' % epoch, nindex, c
 
-    params = model_object.Whid.get_value()
+    W_hid = model_object.Whid.get_value()
+    b_hid = model_object.bhid.get_value()
 
-    return params
+    return W_hid, b_hid
 
 if __name__ == "__main__":
 
@@ -230,15 +230,21 @@ if __name__ == "__main__":
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
-    numbatches = 5
+    numbatches = 1
     batchdim = train[0]/numbatches
 
-    params_final = train_ac(train_data=train, numbatches = numbatches, n_epochs = 10000,
-                               model_class = dA, datadim = batchdim, learning_rate=10, lam=10^4)
+    W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10,
+                               model_class=AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
 
+    W_hid = np.array(W_hid)
+    b_hid = np.array(b_hid)
 
-# TODO extract and store output from dA trained instance for reuse in subsequent steps. 11*11*100
+    # configure final output as inputs for CNN, represented by 100 11*11 filters:
+
+    W_hid = np.transpose(W_hid)
+    W_hid = np.reshape(W_hid, (W_hid.shape[0], dim[1], dim[2]))
+
+    W_two = W_hid.dump('AML/DataScienceBowl/data/CNN_inputFilters')
+    b_hid = b_hid .dump('AML/DataScienceBowl/data/CNN_inputBias')
+
 # TODO include regularisation terms with tensor operations
-# TODO wrap train in function, maybe pass **args
-# TODO Add parameter for number of hidden layers into autoencoder
-# TODO stacked autoencoder
