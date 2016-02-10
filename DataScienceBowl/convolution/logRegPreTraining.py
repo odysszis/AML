@@ -120,7 +120,7 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     print('Optimization complete.')
 
-    with open('logistic1000.pickle', 'w') as f:
+    with open('logistic.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
