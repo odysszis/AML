@@ -136,19 +136,8 @@ def get_image_batch(imagedata, batchsize, numbatches):
     return imagedata_batch
 
 
-def get_binary_masks(masks, preprocess, **args):
 
-    # for each row find first and last white pixel
-    dim = masks.shape
 
-    location_white = np.where(masks == 1)
-    min_w = []
-    max_w = []
-    min_h = []
-    max_h = []
-
-    for i in range(0, dim[0]):
-        min_w =
 
 
 
@@ -182,15 +171,17 @@ if __name__ == "__main__":
 
     c_path, c_series, c_imgid = get_mapping(contour_dir)
     imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                               image_dir, SAX_SERIES, crop_resize, newsize=(64, 64))
+                                               image_dir, SAX_SERIES, crop_resize, newsize=(256, 256))
 
     imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
 
+    binaryMasks
+
     # numpy pickled files will appear in data folder of directory
     # use numpy.load to access
-    imagedata.dump('data/SBtrainImage')
-    contourdata.dump('data/SBtrainMask')
-    imagedata_batch.dump('data/SBtrainImage_batch')
+    imagedata.dump('data/SBtrainImage256')
+    contourdata.dump('data/SBtrainMask256')
+    #imagedata_batch.dump('data/SBtrainImage_batch11from64')
 
 
 
