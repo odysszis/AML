@@ -109,14 +109,6 @@ class LeNetConvPoolLayer(object):
         )
         # pooled_out should be 30 x 100 x 9 x 9
 
-        # no padding to preserve shape
-        # add the bias term. Since the bias is a vector (1D array), we first
-        # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
-        # thus be broadcasted across mini-batches and feature map
-        # width & height
-        # CHANGED
-        #self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
-
         self.output = pooled_out
 
         # store parameters of this layer
@@ -235,8 +227,8 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     layer3_output = layer3.output                           # 20 x 1024 tensor
 
     #cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
-    #cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
-    #cost += 0.9 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
+    #cost += 0.0001 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    #cost += 0.0001 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
     cost = T.mean((layer3_output - y) ** 2)
 
     # create a list of all model parameters to be fit by gradient descent
@@ -288,51 +280,30 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
 
 
-def predict(nkerns = 100, batch_size = 260, logistic_params_path = None,
-            CNN_inputFilters_path = None, CNN_inputBias_path = None):
+def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
     ######################
     #   INITIALIZATIONS  #
     ######################
 
-    # load Auto-encoder pre-trained bias
-    if CNN_inputBias_path is None:
+    if fine_tuned_params_path is None:
         b_CNN_input = None
-    else:
-        b_CNN_input = theano.shared(
-            value=numpy.load(CNN_inputBias_path),       # b is 100 x 1, is ok
-            name='b_CNN_input',
-            borrow = True
-        )
-
-    # load Auto-encoder pre-trained filter weights
-    if CNN_inputFilters_path is None:
         W_CNN_input = None
-    else:
-        W = numpy.load(CNN_inputFilters_path)
-        W_4D_tensor = numpy.reshape(W, (100,1,11,11))
-        W_CNN_input = theano.shared(
-            value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
-            name='W_CNN_input',
-            borrow = True
-        )
-
-    # load logistic layer pre-training parameters
-    if logistic_params_path is None:
         W_logistic = None
         b_logistic = None
     else:
-        with open(logistic_params_path) as f:
+        with open(fine_tuned_params_path) as f:
             params = pickle.load(f)
-        W_logistic, b_logistic = params[0]
+        # load pre-trained parameters
+        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params[0]
 
     rng = numpy.random.RandomState(23455)
 
     # load data
     datasets = load_data()
     train_set_x, train_set_y = datasets[0]
-    n_train_batches = train_set_x.get_value(borrow=True).shape[0]
-    n_train_batches /= batch_size
+    n_batches = train_set_x.get_value(borrow=True).shape[0]
+    n_batches /= batch_size
 
     ###############
     # BUILD MODEL #
@@ -373,22 +344,27 @@ def predict(nkerns = 100, batch_size = 260, logistic_params_path = None,
         }
     )
 
-    im_out = predict_model(0)
-    print im_out.shape
-    im_out = numpy.reshape(im_out, (32,32))
+    preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
+    images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
+
+    with open('images1000.pickle', 'wb') as f:
+        pickle.dump(images, f)
+
+    #im_out = predict_model(0)
+    #print im_out.shape
+    #print im_out[0,500:550]
+    #im_out = numpy.reshape(im_out, (32,32))
     #plt.plot(im_out)
     #plt.savefig('./output.png')
     #print "saved output.png to file"
 
 if __name__ == '__main__':
-    fine_tuning(
-        n_epochs=150,
-        batch_size=20,
-        logistic_params_path = 'logisticParams_150epochs.pickle',       # GO TO CHANGE THIS ONE
-        CNN_inputFilters_path = '../data/CNN_inputFilters',
-        CNN_inputBias_path = '../data/CNN_inputBias'
-    )
-    #predict(batch_size=1, logistic_params_path = 'logisticParams_150epochs.pickle',
-    #        CNN_inputFilters_path='../data/CNN_inputFilters',
-    #        CNN_inputBias_path='../data/CNN_inputBias')
+    #fine_tuning(
+    #    n_epochs=1000,
+    #    batch_size=20,
+    #    logistic_params_path = 'logistic1000.pickle',
+    #    CNN_inputFilters_path = '../data/CNN_inputFilters',
+    #    CNN_inputBias_path = '../data/CNN_inputBias'
+    #)
+    predict(batch_size=1, fine_tuned_params_path = 'fine_tune.pickle')
 

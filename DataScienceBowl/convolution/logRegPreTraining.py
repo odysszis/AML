@@ -76,7 +76,7 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     # cost for pre training
     #cost = 0.5 / batch_size * T.sum( ( layer3_output - y )**2 )    # 20x1024 - 20x1024
-    #cost += 0.9 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
+    #cost += 0.0001 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
     # for now ignore regularization
     cost = T.mean((layer3_output - y) ** 2)
 
@@ -120,13 +120,13 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     print('Optimization complete.')
 
-    with open('logistic150.pickle', 'w') as f:
+    with open('logistic1000.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
 if __name__ == '__main__':
     # use batch_size = 260 in order to do training with only one batch
     # that is train with whole dataset in each epoch
-    pre_training(n_epochs=150, batch_size=260,
+    pre_training(n_epochs=1000, batch_size=260,
                  CNN_inputFilters_path='../data/CNN_inputFilters',
                  CNN_inputBias_path='../data/CNN_inputBias')          # use batch_size = 260 to pass all images in each epoch
