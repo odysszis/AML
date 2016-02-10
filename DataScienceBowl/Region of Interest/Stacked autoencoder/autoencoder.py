@@ -223,7 +223,7 @@ if __name__ == "__main__":
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
-    numbatches = 1
+    numbatches = 5
     batchdim = train[0]/numbatches
 
     W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10000,

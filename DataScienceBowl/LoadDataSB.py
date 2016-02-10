@@ -136,6 +136,22 @@ def get_image_batch(imagedata, batchsize, numbatches):
     return imagedata_batch
 
 
+def get_binary_masks(masks, preprocess, **args):
+
+    # for each row find first and last white pixel
+    dim = masks.shape
+
+    location_white = np.where(masks == 1)
+    min_w = []
+    max_w = []
+    min_h = []
+    max_h = []
+
+    for i in range(0, dim[0]):
+        min_w =
+
+
+
 # There is a manual process to map contours to images, as IDs don't match exactly. Resulting in Dic:
 
 SAX_SERIES = {

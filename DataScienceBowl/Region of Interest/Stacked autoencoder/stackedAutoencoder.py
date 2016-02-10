@@ -205,7 +205,7 @@ if __name__ == "__main__":
     trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
     trainMask = np.array(trainMask, dtype='float64')
 
-    numbatches = 1
+    numbatches = 3
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatches =numbatches,
