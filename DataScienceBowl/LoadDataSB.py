@@ -201,11 +201,13 @@ if __name__ == "__main__":
 
     c_path, c_series, c_imgid = get_mapping(contour_dir)
     imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                               image_dir, SAX_SERIES, crop_resize, newsize=(256, 256))
+                                               image_dir, SAX_SERIES, crop_resize,
+                                               newsize=(256, 256))
 
     imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
 
-    masks_binary = get_binary_masks(contourdata, mask_region = (100,100), preprocess=crop_resize, newsize=(32, 32))
+    masks_binary = get_binary_masks(contourdata, mask_region = (100,100),
+                                    preprocess=crop_resize, newsize=(32, 32))
 
     print(masks_binary.shape)
 
