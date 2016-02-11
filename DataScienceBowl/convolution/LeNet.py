@@ -18,7 +18,7 @@ from logisticReg import LogisticRegression, load_data
 
 #matplotlib.use('Agg')
 
-logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
+logging.basicConfig(filename='lenet.log', filemode='w', level=logging.INFO)
 
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
@@ -269,15 +269,17 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
     while (epoch < n_epochs):
         epoch += 1
+        logging.info('%-10Epoch%-10batch%-10cost')
         for minibatch_index in xrange(n_train_batches):
 
             cost_ij = train_model(minibatch_index)
-            print '\nepoch = %s' % epoch
-            print 'batch = %s' % minibatch_index
-            print 'cost = %s' % cost_ij
-
+            #print '\nepoch = %s' % epoch
+            #print 'batch = %s' % minibatch_index
+            #print 'cost = %s' % cost_ij
+            logging.info('%-10s %-10s %-10s' % epoch, minibatch_index, cost_ij)
             if(cost_ij - last_loss < epsilon)
-                print 'converged: %.2f' % (cost_ij - last_loss)
+                #print 'converged: %.2f' % (cost_ij - last_loss)
+                logging.info('Converged %s'%(cost_ij - last_loss))
                 return
 
             last_loss = cost_ij
