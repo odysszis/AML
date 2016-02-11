@@ -98,8 +98,8 @@ def load_data():
 
     print('... loading data')
 
-    train_set_x = np.load('../data/SBtrainImage')
-    train_set_y = np.load('../data/SBtrainMask32')
+    train_set_x = np.load('../data/SBtrainImage64')
+    train_set_y = np.load('../data/SBtrainBinaryMask32')
 
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
@@ -115,3 +115,6 @@ def load_data():
     rval = [(shared_x, shared_y)]
 
     return rval
+
+if __name__ == '__main__':
+    load_data()
