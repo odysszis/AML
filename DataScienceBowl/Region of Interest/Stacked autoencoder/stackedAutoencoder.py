@@ -6,7 +6,7 @@ import theano
 import hiddenLayer as HL
 import autoencoder as AC
 import logisticRegression as LR
-
+from scipy import misc
 
 class StackedAutoEncoder(object):
     """Stacked denoising auto-encoder class (SdA)
@@ -193,26 +193,69 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
+def crop_ROI(images, contours, roi, roi_dim):
+
+
+    dim = images.shape
+    image_roi = []
+    contour_roi = []
+
+    for i in range(0, dim[0]):
+
+        # prep image files including up sampling roi to 256*256
+        image = images[i, :, :]
+        contour = contours[i, :, :]
+        region = roi[i, :, :]
+        region = misc.imresize(region, dim)
+
+        # get roi co-ords for cropping; using centre
+        rows, cols = np.where(region == 1)
+        cen_x, cen_y = (np.median(cols), np.median(rows))
+
+        # execute  cropping on the image to produce ROI
+        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+                cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+
+        # execute cropping on the contour
+        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+                  cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+
+        # collect
+        image_roi.append(image)
+        contour_roi.append(contour)
+
+    image_roi = np.array(image_roi)
+    contour_roi = np.array(contour_roi)
+
+    return image_roi, contour_roi
+
 if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
 
-    trainMask = np.random.rand(10000, 64, 64)
-    train = np.random.rand(10000, 4096)
-    train = np.array(train, dtype='float64')
+    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainBinaryMask32')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage256')
+    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask256')
 
-    dim = trainMask.shape
-    trainMask = np.reshape(trainMask, (dim[0], (dim[1]*dim[2])))
-    trainMask = np.array(trainMask, dtype='float64')
+    train_roi, mask_roi =crop_ROI(images=train, contours=mask,
+                                  roi=roi, roi_dim=(100,100))
 
-    numbatches = 3
+    dim = mask_roi.shape
+
+    mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
+    mask_roi = np.array(mask_roi, dtype='float64')
+
+    train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
+    train_roi= np.array(train_roi, dtype='float64')
+
+    numbatches = 1
     batchdim = train.shape[0]/numbatches
 
-    pretrainedSA = pretrain_sa(train_data=train, train_masks=trainMask, numbatches =numbatches,
+    pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
                                n_epochs=10, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
-    finetunedSA = finetune_sa(train_data =train, train_masks=trainMask, numbatches =numbatches,
+    finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
                                n_epochs=10, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 

@@ -1,4 +1,5 @@
 
+__docformat__ = 'restructedtext en'
 
 import pickle as cPickle
 import gzip
@@ -7,7 +8,7 @@ import sys
 import timeit
 
 import numpy as np
-
+import pickle
 import theano
 import theano.tensor as T
 
@@ -21,7 +22,7 @@ class LogisticRegression(object):
     determine a class membership probability.
     """
 
-    def __init__(self, input, n_in, n_out):
+    def __init__(self, input, n_in, n_out, W = None, b = None):
         """ Initialize the parameters of the logistic regression
 
         :type input: theano.tensor.TensorType
@@ -36,28 +37,45 @@ class LogisticRegression(object):
         :param n_out: number of output units, the dimension of the space in
                       which the labels lie
 
-        """
-        # start-snippet-1
-        # initialize with 0 the weights W as a matrix of shape (batch_size, n_in, n_out)
-        self.W = theano.shared(
-            value=np.zeros(
-                (n_in, n_out),
-                dtype=theano.config.floatX
-            ),
-            name='W',
-            borrow=True
-        )
-        # initialize the biases b as a vector of n_out 0s
-        self.b = theano.shared(
-            value=np.zeros(
-                (n_out,),
-                dtype=theano.config.floatX
-            ),
-            name='b',
-            borrow=True
-        )
+        :type W: tensor of size
+        :param n_out: number of output units, the dimension of the space in
 
-        self.output = T.tanh( T.dot(input, self.W) + self.b )   # 20 x 1024
+        :type n_out: int
+        :param n_out: number of output units, the dimension of the space in
+        """
+
+        if W is None:
+
+            # initialize with 0 the weights W as a matrix of shape (batch_size, n_in, n_out)
+            self.W = theano.shared(
+                value=np.zeros(
+                    (n_in, n_out),
+                    dtype=theano.config.floatX
+                ),
+                name='W',
+                borrow=True
+            )
+
+        else:
+            self.W = W
+
+        if b is None:
+
+            # initialize the biases b as a vector of n_out 0s
+            self.b = theano.shared(
+                value=np.zeros(
+                    (n_out,),
+                    dtype=theano.config.floatX
+                ),
+                name='b',
+                borrow=True
+            )
+
+        else:
+            self.b = b
+
+        # output
+        self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # 20 x 1024
 
         # parameters of the model
         self.params = [self.W, self.b]                                      # W: 1024 x 8100, b: 1024 x 1
@@ -80,11 +98,8 @@ def load_data():
 
     print('... loading data')
 
-    train_set_x = np.load('../data/SBtrainImage')
-    train_set_y = np.load('../data/SBtrainMask32')
-
-    #print train_set_x[1,10:20,10:20]
-    #print train_set_y[1,10:20,10:20]
+    train_set_x = np.load('../data/SBtrainImage64')
+    train_set_y = np.load('../data/SBtrainBinaryMask32')
 
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
@@ -100,7 +115,6 @@ def load_data():
     rval = [(shared_x, shared_y)]
 
     return rval
-
 
 if __name__ == '__main__':
     load_data()
