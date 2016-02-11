@@ -269,17 +269,17 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
     while (epoch < n_epochs):
         epoch += 1
-        logging.info('%-10Epoch%-10batch%-10cost')
+        logging.debug('%-10Epoch%-10batch%-10cost')
         for minibatch_index in xrange(n_train_batches):
 
             cost_ij = train_model(minibatch_index)
             #print '\nepoch = %s' % epoch
             #print 'batch = %s' % minibatch_index
             #print 'cost = %s' % cost_ij
-            logging.info('%-10s %-10s %-10s' % epoch, minibatch_index, cost_ij)
-            if(cost_ij - last_loss < epsilon)
+            logging.debug('%-10s %-10s %-10s' % (epoch, minibatch_index, cost_ij))
+            if not cost_ij - last_loss >= epsilon:
                 #print 'converged: %.2f' % (cost_ij - last_loss)
-                logging.info('Converged %s'%(cost_ij - last_loss))
+                logging.debug('Converged %s'%(cost_ij - last_loss))
                 return
 
             last_loss = cost_ij
