@@ -274,7 +274,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
             cost_ij = train_model(minibatch_index)
             #print '\nepoch = %s' % epoch
             #print 'batch = %s' % minibatch_index
-            print 'cost = %s' % cost_ij
+            print 'epoch = %s batch = %s cost = %s' % (epoch,minibatch_index,cost_ij)
             logging.debug('%-10s %-10s %-10s' % (epoch, minibatch_index, cost_ij))
             if cost_ij - last_loss <= epsilon:
                 #print 'converged: %.2f' % (cost_ij - last_loss)
