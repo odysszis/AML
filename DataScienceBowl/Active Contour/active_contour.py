@@ -4,6 +4,17 @@
 ######################################################################
 import numpy as np
 import skfmm
+from PIL import Image
+
+
+def load_image_asarray(filename, name):
+    img = Image.open(filename).convert('LA')
+    img.load()
+    img_name = np.asarray(img, dtype="int32")
+    return img_name
+
+
+heart = load_image_asarray(r"DataScienceBowl/Active Contour/ROI_image.png", "heart")
 
 
 def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1/np.pi, eta=1e-5):
@@ -26,7 +37,9 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
     # Initialize phi as a signed distance function which looks like a party hat. It
     # computes for each point in the 64 x 64 region of interest its distance to
     # the closest contour point in the binary image LV.
-    phi = get_contour(lv)
+    phi = lv
+    phi[phi == 1] = -1
+    phi[phi == 0] = 1
     phi = -skfmm.distance(phi)
     # we will store the initialization of phi again in an extra variable because
     # we have to recall it every update

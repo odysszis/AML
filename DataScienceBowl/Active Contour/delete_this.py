@@ -22,13 +22,16 @@ def get_contour(s):
                 bound[k, l] = 1
     return bound
 
-
-ring = get_contour(circ)
-plt.imshow(ring)
+circ[circ == 1] = -1
+circ[circ == 0] = 1
+plt.imshow(circ)
 plt.show()
-ring[ring == 1] = -1
-ring[ring == 0] = 1
-D = skfmm.distance(ring, dx=1e-2)
+# ring = get_contour(circ)
+# plt.imshow(ring)
+# plt.show()
+# ring[ring == 1] = -1
+# ring[ring == 0] = 1
+D = -skfmm.distance(circ, dx=1e-2)
 plt.imshow(D)
 plt.show()
 
