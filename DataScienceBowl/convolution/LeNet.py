@@ -264,6 +264,9 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     print('... fine tuning')
 
     epoch = 0
+    epsilon = 0.00005
+    last_loss = 0
+
     while (epoch < n_epochs):
         epoch += 1
         for minibatch_index in xrange(n_train_batches):
@@ -272,6 +275,12 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
             print '\nepoch = %s' % epoch
             print 'batch = %s' % minibatch_index
             print 'cost = %s' % cost_ij
+
+            if(cost_ij - last_loss < epsilon)
+                print 'converged: %.2f' % (cost_ij - last_loss)
+                return
+
+            last_loss = cost_ij
 
     print('Optimization complete.')
 
