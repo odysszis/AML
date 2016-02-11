@@ -7,9 +7,13 @@ import hiddenLayer as HL
 import autoencoder as AC
 import logisticRegression as LR
 from scipy import misc
+import matplotlib.pyplot as plt
+
+
 
 class StackedAutoEncoder(object):
-    """Stacked denoising auto-encoder class (SdA)
+    """
+    Stacked denoising auto-encoder class (SdA)
     """
 
     def __init__(
@@ -41,8 +45,7 @@ class StackedAutoEncoder(object):
 
         for i in xrange(self.n_layers):
 
-            # construct the sigmoidal layer
-            # the size of the input
+            # construct the sigmoidal layer the size of the input
             if i == 0:
                 input_size = n_ins
             else:
@@ -86,14 +89,7 @@ class StackedAutoEncoder(object):
 
     def get_cost_updates(self, datadim, learning_rate, lam):
         """
-        :type scalar
-        :param learning_rate: rate which weighs the gradient step
-
-        :type scalar
-        :param lam: regularization parameter for the cost function
-
-        :type pair (cost, update)
-        :return: compute cost and update for one training step of the autoencoder
+        Cost function for fine tuning SA. Each of the embedded layer classes have their own cost function
         """
 
         # Compute the cost
@@ -107,13 +103,10 @@ class StackedAutoEncoder(object):
         return (cost, updates)
 
 
-
-
 def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **args):
     '''_
-        Pretrains stacked autoencoder
+        Pretrains stacked autoencoder layers
     '''
-
 
     X = T.matrix('X')
     Y = T.matrix('Y')
@@ -128,6 +121,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
     rng = np.random.RandomState(123)
     theano_rng = RandomStreams(rng.randint(2 ** 30))
 
+    # instantiate SA class
     model_object = model_class(
         inputs=X,
         masks=Y,
@@ -137,6 +131,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
         hidden_layers_sizes=[100, 100],
         n_outs=4096)
 
+    # pre train each layer using underlying class definition
     for autoE in model_object.AutoEncoder_layers:
         # get the cost and the updates list
         cost, updates = autoE.get_cost_updates(**args)
@@ -159,7 +154,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
 
     HL.iterate_epochs(n_epochs, numbatches, train_model, logReg)
 
-
+    # return pretuned SA object
     return model_object
 
 
@@ -169,6 +164,7 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     '''
         Fine tunes stacked autoencoder
     '''
+
     finetunedSA = pretrainedSA
 
     traindim = train_data.shape
@@ -176,7 +172,6 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
 
 
     index = T.lscalar()
-
 
 
     train_data = theano.shared(train_data)
@@ -193,7 +188,26 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
-def crop_ROI(images, contours, roi, roi_dim):
+def predict_sa(images, SA):
+
+
+    mask_predictions = []
+
+    for i in range(0, images.shape[0]):
+        current_image = np.reshape(images[i, :, :], (1, (64*64)))
+        predict_model = theano.function(
+            inputs = [],
+            outputs= SA.logLayer.y_pred,
+            givens={SA.X: current_image})
+        preds = predict_model()
+        mask = np.reshape(preds, (64, 64))
+
+    mask_predictions.append(mask)
+    masks = np.array(mask_predictions)
+
+    return masks
+
+def crop_ROI(images, contours, roi, roi_dim, newsize):
 
 
     dim = images.shape
@@ -213,12 +227,16 @@ def crop_ROI(images, contours, roi, roi_dim):
         cen_x, cen_y = (np.median(cols), np.median(rows))
 
         # execute  cropping on the image to produce ROI
-        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
                 cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
 
+        image = misc.imresize(image, newsize)
+
         # execute cropping on the contour
-        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
                   cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+
+        contour = misc.imresize(contour, newsize)
 
         # collect
         image_roi.append(image)
@@ -237,13 +255,15 @@ if __name__ == "__main__":
     train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage256')
     mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask256')
 
+
     train_roi, mask_roi =crop_ROI(images=train, contours=mask,
-                                  roi=roi, roi_dim=(100,100))
+                                  roi=roi, roi_dim=(100, 100), newsize=(64, 64))
 
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
     mask_roi = np.array(mask_roi, dtype='float64')
+
 
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
     train_roi= np.array(train_roi, dtype='float64')
@@ -253,9 +273,15 @@ if __name__ == "__main__":
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
                                n_epochs=10, model_class=StackedAutoEncoder, datadim=batchdim,
-                                            learning_rate=10, lam=10^4)
+                                            learning_rate=1, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
                                n_epochs=10, pretrainedSA=pretrainedSA, datadim=batchdim,
-                                            learning_rate=10, lam=10^4)
+                                            learning_rate=1, lam=10^4)
 
+
+    images = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage64')
+
+    mask_predictions = predict_sa(images, finetunedSA)
+
+    print(mask_predictions.shape)
