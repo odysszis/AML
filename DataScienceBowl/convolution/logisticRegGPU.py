@@ -37,11 +37,11 @@ class LogisticRegression(object):
         :param n_out: number of output units, the dimension of the space in
                       which the labels lie
 
-        :type W: tensor of size
-        :param n_out: number of output units, the dimension of the space in
+        :type W: tensor of size 8100 x 1024
+        :param W: weights of logistic regression layer
 
-        :type n_out: int
-        :param n_out: number of output units, the dimension of the space in
+        :type b: tensor of size 1024 x 1
+        :param b: bias vector for logistic regression layer
         """
 
         if W is None:
@@ -75,8 +75,8 @@ class LogisticRegression(object):
             self.b = b
 
         # output
-        #self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # 20 x 1024
-        self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )
+        self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # 20 x 1024
+        #self.output = T.nnet.softmax( T.dot(input, self.W) + self.b )
 
         # parameters of the model
         self.params = [self.W, self.b]                                      # W: 1024 x 8100, b: 1024 x 1

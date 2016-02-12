@@ -352,7 +352,7 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
 if __name__ == '__main__':
     # call the following method for fine tuning after pre-training the logistic regression layer
-    fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_params.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
+    #fine_tuning(n_epochs=150,batch_size=20,logistic_params_path = '../data/logistic_params.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
     # call this method to predict outcome after fine tuning
-    #predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_params.pickle')
+    predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_params.pickle')
 

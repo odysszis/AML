@@ -5,8 +5,8 @@ import pickle
 import theano
 import theano.tensor as T
 
-from logisticReg import LogisticRegression, load_data
-from LeNet import LeNetConvPoolLayer
+from logisticRegGPU import LogisticRegression, load_data
+from LeNetGPU import LeNetConvPoolLayer
 
 def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 260, CNN_inputFilters_path = None, CNN_inputBias_path = None):
 
@@ -28,10 +28,12 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     if CNN_inputFilters_path is None:
         W_CNN_input = None
     else:
-        W = numpy.load(CNN_inputFilters_path)
-        W_4D_tensor = numpy.reshape(W, (100,1,11,11))
+        W = numpy.load(CNN_inputFilters_path)           # 100 x 11 x 11
+        W = numpy.reshape(W, (nkerns, 11*11))           # 100 x 121
+        W = W.transpose()                               # 121 x 100
+        W = numpy.reshape(W, (1,11,11,batch_size))      # 1 x 11 x 11 x 100
         W_CNN_input = theano.shared(
-            value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
+            value=W,
             name='W_CNN_input',
             borrow = True
         )
@@ -58,12 +60,14 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     # Convolution + Pooling Layer
 
-    layer0_input = x.reshape((batch_size, 1, 64, 64))
+    # reshape input: train_set_x is batch_size x 4096 and we need it to be 1 x 64 x 64 x batch_size
+    layer0_input = x.transpose()
+    layer0_input = layer0_input.reshape((1,64,64,batch_size))
     layer0 = LeNetConvPoolLayer(
         rng = rng,
         input=layer0_input,
-        filter_shape=(nkerns, 1, 11, 11),
-        image_shape=(batch_size, 1, 64, 64),
+        filter_shape=(1, 11, 11, nkerns),
+        image_shape=(1, 64, 64, batch_size),
         poolsize=(6, 6),
         W = W_CNN_input,
         b = b_CNN_input
@@ -127,6 +131,6 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 if __name__ == '__main__':
     # use batch_size = 260 in order to do training with only one batch
     # that is train with whole dataset in each epoch
-    pre_training(n_epochs=1000, batch_size=260,
+    pre_training(n_epochs=150, batch_size=260,
                  CNN_inputFilters_path='../data/CNN_inputFilters',
                  CNN_inputBias_path='../data/CNN_inputBias')          # use batch_size = 260 to pass all images in each epoch
