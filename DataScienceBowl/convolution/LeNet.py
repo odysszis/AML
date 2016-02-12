@@ -4,8 +4,6 @@ import sys
 import timeit
 import logging
 
-fx = theano.config.floatX
-
 import numpy
 import pickle
 import theano
@@ -15,6 +13,7 @@ from theano.tensor.nnet import conv2d
 
 from logisticReg import LogisticRegression, load_data
 
+fx = theano.config.floatX
 
 logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
 
