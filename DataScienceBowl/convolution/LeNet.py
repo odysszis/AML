@@ -85,7 +85,7 @@ class LeNetConvPoolLayer(object):
             # if b are not provided, generate them randomly
 
             b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
-            self.b = theano.shared(value=b_values, borrow=True, dtype = fx)
+            self.b = theano.shared(value=b_values, borrow=True)
         else:
             self.b = b
 
@@ -147,10 +147,9 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     else:
         b_temp = numpy.load(CNN_inputBias_path)
         b_CNN_input = theano.shared(
-            value=b_temp,       # b is 100 x 1, is ok
+            value=b_temp.astype(fx),       # b is 100 x 1, is ok
             name='b_CNN_input',
-            borrow = True,
-            dtype = fx
+            borrow = True
         )
 
     # load Auto-encoder pre-trained filter weights
@@ -160,10 +159,9 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
         W = numpy.load(CNN_inputFilters_path)
         W_4D_tensor = numpy.reshape(W, (100,1,11,11))
         W_CNN_input = theano.shared(
-            value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
+            value=W_4D_tensor.astype(fx),    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
             name='W_CNN_input',
-            borrow = True,
-            dtype = fx
+            borrow = True
         )
 
     # load logistic layer pre-training parameters
@@ -185,7 +183,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     n_train_batches /= batch_size                                           # 13
 
     # allocate symbolic variables for the data
-    index = T.lscalar(dtype=fx)  # index to a [mini]batch
+    index = T.lscalar()  # index to a [mini]batch
 
     # start-snippet-1
     x = T.matrix('x', dtype=fx)   # the data is presented as rasterized images
@@ -326,7 +324,7 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
     # build model
     print('... building the model')
-    index = T.lscalar(dtype=fx)
+    index = T.lscalar()
     x = T.matrix('x', dtype=fx)
 
     # Convolution + Pooling Layer
