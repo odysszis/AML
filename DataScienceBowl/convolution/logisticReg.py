@@ -12,6 +12,7 @@ import pickle
 import theano
 import theano.tensor as T
 
+fx = theano.config.floatX
 
 class LogisticRegression(object):
     """Multi-class Logistic Regression Class
@@ -105,12 +106,12 @@ def load_data():
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
     train_set_x = np.reshape(train_set_x, (dim[0], (dim[1]*dim[2])) )
-    shared_x = theano.shared(train_set_x, borrow=True)                      # convert to 260 x 4096
+    shared_x = theano.shared(train_set_x, borrow=True, dtype = fx)                      # convert to 260 x 4096
 
     train_set_y = np.asarray(train_set_y, dtype='float64')
     dim = train_set_y.shape
     train_set_y = np.reshape(train_set_y, (dim[0], (dim[1]*dim[2])) )
-    shared_y = theano.shared(train_set_y, borrow=True)                      # convert to 260 x 1024
+    shared_y = theano.shared(train_set_y, borrow=True, dtype = fx)                      # convert to 260 x 1024
     #shared_y = T.cast(shared_y, 'int64')
 
     rval = [(shared_x, shared_y)]

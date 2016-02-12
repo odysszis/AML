@@ -8,6 +8,8 @@ import theano.tensor as T
 from logisticReg import LogisticRegression, load_data
 from LeNet import LeNetConvPoolLayer
 
+fx = theano.config.floatX
+
 def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size = 260, CNN_inputFilters_path = None, CNN_inputBias_path = None):
 
     ######################
@@ -18,10 +20,12 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     if CNN_inputBias_path is None:
         b_CNN_input = None
     else:
+        b_temp = numpy.load(CNN_inputBias_path)
         b_CNN_input = theano.shared(
-            value=numpy.load(CNN_inputBias_path),       # b is 100 x 1, is ok
+            value=b_temp,       # b is 100 x 1, is ok
             name='b_CNN_input',
-            borrow = True
+            borrow = True,
+            dtype = fx
         )
 
     # load Auto-encoder pre-trained filter weights
@@ -33,7 +37,8 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
         W_CNN_input = theano.shared(
             value=W_4D_tensor,    # W is 100 x 11 x 11 should convert to 100 x 1 x 11 x 11
             name='W_CNN_input',
-            borrow = True
+            borrow = True,
+            dtype = fx
         )
 
     # initialize random generator
@@ -47,9 +52,9 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     n_train_batches /= batch_size                                           # 130
 
     # allocate symbolic variables for the data
-    index = T.lscalar()  # index to a [mini]batch
-    x = T.matrix('x')   # the data is presented as rasterized images
-    y = T.matrix('y')  # the labels are presented as 2D mask vector
+    index = T.lscalar(dtype=fx)  # index to a [mini]batch
+    x = T.matrix('x', dtype=fx)   # the data is presented as rasterized images
+    y = T.matrix('y', dtype=fx)  # the labels are presented as 2D mask vector
 
     ######################
     # BUILD ACTUAL MODEL #
