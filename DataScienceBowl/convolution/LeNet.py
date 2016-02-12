@@ -15,7 +15,12 @@ from theano.tensor.nnet import conv2d
 
 from logisticReg import LogisticRegression, load_data
 
+
 logging.basicConfig(filename='logistic.log', filemode='w', level=logging.INFO)
+
+#matplotlib.use('Agg')
+
+
 
 class LeNetConvPoolLayer(object):
     """Pool Layer of a convolutional network """
@@ -264,14 +269,25 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     print('... fine tuning')
 
     epoch = 0
+    epsilon = 0.0000005
+    last_loss = 0
+
+    logging.debug('%-10s%-10s%-10s' %('Epoch','Batch','Cost'))
     while (epoch < n_epochs):
         epoch += 1
         for minibatch_index in xrange(n_train_batches):
 
             cost_ij = train_model(minibatch_index)
-            print '\nepoch = %s' % epoch
-            print 'batch = %s' % minibatch_index
-            print 'cost = %s' % cost_ij
+            #print '\nepoch = %s' % epoch
+            #print 'batch = %s' % minibatch_index
+            print 'epoch = %s batch = %s cost = %s' % (epoch,minibatch_index,cost_ij)
+            logging.debug('%-10s %-10s %-10s' % (epoch, minibatch_index, cost_ij))
+            if cost_ij - last_loss <= epsilon:
+                #print 'converged: %.2f' % (cost_ij - last_loss)
+                logging.debug('Converged %s'%(cost_ij - last_loss))
+                return
+
+            last_loss = cost_ij
 
     print('Optimization complete.')
 
@@ -351,6 +367,7 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='lenet.log', filemode='w', level=logging.DEBUG)
     # call the following method for fine tuning after pre-training the logistic regression layer
     fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_params.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
     # call this method to predict outcome after fine tuning
