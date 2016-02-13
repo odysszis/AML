@@ -199,7 +199,7 @@ def train_ac(train_data, numbatches, n_epochs, model_class, **args):
     model_object = model_class(numpy_rng=rng,
             theano_rng=theano_rng,
             input=X,
-            n_visible=4096,
+            n_visible=121,
             n_hidden=100)
 
     cost, updates = model_object.get_cost_updates(**args)
@@ -219,11 +219,11 @@ if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage64')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
-    numbatches = 1
+    numbatches = 5
     batchdim = train[0]/numbatches
 
     W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10000,

@@ -7,6 +7,7 @@ import dicom
 import cv2
 from LoadData import crop_resize
 import random
+
 import matplotlib.pyplot as plt
 
 # TODO add method for storing resulting numpy arrays as theano shared variables
@@ -205,16 +206,16 @@ if __name__ == "__main__":
 
     imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
 
-    #masks_binary = get_binary_masks(contourdata, mask_region = (100,100),
-                                   # preprocess=crop_resize, newsize=(32, 32))
+    masks_binary = get_binary_masks(contourdata, mask_region = (100,100),
+                                    preprocess=crop_resize, newsize=(32, 32))
 
-    #print(masks_binary.shape)
+    print(masks_binary.shape)
 
     # numpy pickled files will appear in data folder of directory
     # use numpy.load to access
     imagedata.dump('data/SBtrainImage256')
     contourdata.dump('data/SBtrainMask256')
-    #masks_binary.dump('data/SBtrainBinaryMask32')
+    masks_binary.dump('data/SBtrainBinaryMask32')
     #imagedata_batch.dump('data/SBtrainImage_batch11from64')
 
 
