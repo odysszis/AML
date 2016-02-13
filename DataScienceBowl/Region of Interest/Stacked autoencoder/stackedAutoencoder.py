@@ -138,7 +138,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
         numpy_rng=rng,
         theano_rng=theano_rng,
         n_ins=4096,
-        hidden_layers_sizes=[100, 100],
+        hidden_layers_sizes=[100, 50, 30, 50, 100],
         n_outs=4096)
 
     for autoE in model_object.AutoEncoder_layers:
@@ -236,12 +236,16 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
         cen_x, cen_y = (np.median(cols), np.median(rows))
 
         # execute  cropping on the image to produce ROI
-        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
                 cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
 
+        image = misc.imresize(image, newsize)
+
         # execute cropping on the contour
-        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2/2),
+        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
                   cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+
+        contour = misc.imresize(contour, newsize)
 
         # collect
         image_roi.append(image)
@@ -260,6 +264,7 @@ if __name__ == "__main__":
     mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask256')
 
 
+
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
         roi_pred = pickle.load(f)
         roi_pred = np.asarray(roi_pred)
@@ -268,7 +273,7 @@ if __name__ == "__main__":
         roi_pred[roi_pred < thres ] = 0
 
     train_roi, mask_roi =crop_ROI(images=train, contours=mask,
-                                  roi=roi, roi_dim=(100,100))
+                                  roi=roi, roi_dim=(100,100), newsize=(64, 64))
 
     dim = mask_roi.shape
     print(mask_roi.shape)
@@ -283,11 +288,11 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=30000, model_class=StackedAutoEncoder, datadim=batchdim,
+                               n_epochs=5000, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=50000, pretrainedSA=pretrainedSA, datadim=batchdim,
+                               n_epochs=5000, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
 
@@ -296,7 +301,6 @@ if __name__ == "__main__":
     mask_predictions = predict_sa(images, finetunedSA)
     mask_roi = np.reshape(mask_roi, (260, 64, 64))
 
-    print(mask_predictions.shape)
 
     for i in range(0, 4):
         plt.subplot(1,5,1)
@@ -311,8 +315,8 @@ if __name__ == "__main__":
         plt.imshow(mask_predictions[i,:,:])
         plt.show()
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_pred', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_predHls', 'wb') as f:
         pickle.dump(mask_predictions, f)
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_model', 'wb') as g:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_modelHls', 'wb') as g:
         pickle.dump(finetunedSA, g)
