@@ -229,7 +229,7 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
         image = images[i, :, :]
         contour = contours[i, :, :]
         region = roi[i, :, :]
-        region = misc.imresize(region, dim)
+        region = misc.imresize(region, (dim[1], dim[2]))
 
         # get roi co-ords for cropping; using centre
         rows, cols = np.where(region == 1)
@@ -259,10 +259,14 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
 if __name__ == "__main__":
 
     # load required inputs and call training method (random data used until CNN is working)
-    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainBinaryMask32')
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage256')
-    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainMask256')
+    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
+    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
 
+    print(roi.shape)
+    plt.imshow(roi[1,:,:])
+    plt.imshow(mask[1,:,:])
+    plt.show()
 
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
@@ -284,15 +288,15 @@ if __name__ == "__main__":
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
     train_roi= np.array(train_roi, dtype='float64')
 
-    numbatches = 1
+    numbatches = 2
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5000, model_class=StackedAutoEncoder, datadim=batchdim,
+                               n_epochs=10000, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5000, pretrainedSA=pretrainedSA, datadim=batchdim,
+                               n_epochs=15000, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
 

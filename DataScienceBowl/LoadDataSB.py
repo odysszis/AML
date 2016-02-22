@@ -164,12 +164,6 @@ def get_binary_masks(contourdata, mask_region, preprocess, **args):
 
 
 
-
-
-
-
-
-
 # There is a manual process to map contours to images, as IDs don't match exactly. Resulting in Dic:
 
 SAX_SERIES = {
@@ -199,22 +193,23 @@ SAX_SERIES = {
 if __name__ == "__main__":
 
     c_path, c_series, c_imgid = get_mapping(contour_dir)
-    imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
-                                               image_dir, SAX_SERIES, crop_resize,
-                                               newsize=(256, 256))
+    #imagedata, contourdata = load_contours_dcm(c_path, c_series, c_imgid,
+                                              # image_dir, SAX_SERIES, crop_resize,
+                                              # newsize=(256, 256))
 
-    #imagedata_batch = get_image_batch(imagedata, (11, 11), 10000)
+    imagedata = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
+    contourdata = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
 
-    #masks_binary = get_binary_masks(contourdata, mask_region = (100,100),
-                                   # preprocess=crop_resize, newsize=(32, 32))
+    masks_binary = get_binary_masks(contourdata, mask_region = (100,100),
+                                    preprocess=crop_resize, newsize=(32, 32))
 
     #print(masks_binary.shape)
 
     # numpy pickled files will appear in data folder of directory
     # use numpy.load to access
-    imagedata.dump('data/SBtrainImage256')
-    contourdata.dump('data/SBtrainMask256')
-    #masks_binary.dump('data/SBtrainBinaryMask32')
+    #imagedata.dump('data/SBtrainImage256')
+    #contourdata.dump('data/SBtrainMask256')
+    masks_binary.dump('data/SBXtrainBinaryMask32')
     #imagedata_batch.dump('data/SBtrainImage_batch11from64')
 
 
