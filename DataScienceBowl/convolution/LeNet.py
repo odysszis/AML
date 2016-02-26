@@ -279,16 +279,16 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
             #print 'batch = %s' % minibatch_index
             print 'epoch = %s batch = %s cost = %s' % (epoch,minibatch_index,cost_ij)
             logging.debug('%-10s %-10s %-10s' % (epoch, minibatch_index, cost_ij))
-            if cost_ij - last_loss <= epsilon:
+            #if cost_ij - last_loss <= epsilon:
                 #print 'converged: %.2f' % (cost_ij - last_loss)
-                logging.debug('Converged %s'%(cost_ij - last_loss))
-                return
+            #    logging.debug('Converged %s'%(cost_ij - last_loss))
+            #    return
 
-            last_loss = cost_ij
+            #last_loss = cost_ij
 
     print('Optimization complete.')
 
-    with open('../data/fine_tune_params.pickle', 'w') as f:
+    with open('../data/fine_tune_paramsX.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
@@ -359,14 +359,14 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
-    with open('../data/CNN_output.pickle', 'wb') as f:
+    with open('../data/CNN_outputX.pickle', 'wb') as f:
         pickle.dump(images, f)
 
 
 if __name__ == '__main__':
     logging.basicConfig(filename='lenet.log', filemode='w', level=logging.DEBUG)
     # call the following method for fine tuning after pre-training the logistic regression layer
-    fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_params.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
+    #fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_paramsX.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
     # call to predict outcome after fine tuning
-    #predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_params.pickle')
+    predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_paramsX.pickle')
 
