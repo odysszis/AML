@@ -9,8 +9,7 @@ import logisticRegression as LR
 from scipy import misc
 import matplotlib.pyplot as plt
 import pickle
-
-
+import os
 
 class StackedAutoEncoder(object):
     """Stacked denoising auto-encoder class (SdA)
@@ -23,7 +22,7 @@ class StackedAutoEncoder(object):
         numpy_rng,
         theano_rng=None,
         n_ins=4096,
-        hidden_layers_sizes=[100, 50, 30, 50, 100],
+        hidden_layers_sizes=[100, 100],
         n_outs=4096):
 
         self.sigmoid_layers = []
@@ -112,7 +111,7 @@ class StackedAutoEncoder(object):
 
 
 
-
+ss
 def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **args):
     '''_
         Pretrains stacked autoencoder
@@ -138,7 +137,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
         numpy_rng=rng,
         theano_rng=theano_rng,
         n_ins=4096,
-        hidden_layers_sizes=[100, 50, 30, 50, 100],
+        hidden_layers_sizes=[100, 100],
         n_outs=4096)
 
     for autoE in model_object.AutoEncoder_layers:
@@ -199,19 +198,15 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
 
 def predict_sa(images, SA):
 
+    dim = images.shape
 
-    mask_predictions = []
-
-    for i in range(0, images.shape[0]):
-        current_image = np.reshape(images[i, :, :], (1, (64*64)))
-        predict_model = theano.function(
+    images = np.reshape(images, (dim[0], (64*64)))
+    predict_model = theano.function(
             inputs = [],
             outputs= SA.logLayer.y_pred,
-            givens={SA.X: current_image})
-        preds = predict_model()
-        mask = np.reshape(preds, (64, 64))
-        mask_predictions.append(mask)
-
+            givens={SA.X: images})
+    preds = predict_model()
+    mask_predictions= np.reshape(preds, (dim[0], 64, 64))
     masks = np.array(mask_predictions)
     return masks
 
@@ -224,8 +219,6 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
     contour_roi = []
 
     for i in range(0, dim[0]):
-
-        print(i)
 
         # prep image files including up sampling roi to 256*256
         image = images[i, :, :]
@@ -260,10 +253,11 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
 
 if __name__ == "__main__":
 
+
     # load required inputs and call training method (random data used until CNN is working)
-    roi = np.load('/DataScienceBowl/data/SBXtrainBinaryMask32')
-    train = np.load('/DataScienceBowl/data/SBXtrainImage256')
-    mask = np.load('/DataScienceBowl/data/SBXtrainMask256')
+    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
+    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
 
     dimimages = roi.shape
     numimages = dimimages[0]
@@ -275,7 +269,7 @@ if __name__ == "__main__":
     # plt.show()
 
 
-    with open('/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
         roi_pred = pickle.load(f)
         roi_pred = np.asarray(roi_pred)
         thres = 0.5
@@ -284,9 +278,9 @@ if __name__ == "__main__":
 
     train_roi, mask_roi =crop_ROI(images=train, contours=mask,
                                   roi=roi, roi_dim=(100,100), newsize=(64, 64))
+    train_roi = np.true_divide(train_roi,255)
 
     dim = mask_roi.shape
-    print(mask_roi.shape)
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
     mask_roi = np.array(mask_roi, dtype='float64')
@@ -302,20 +296,21 @@ if __name__ == "__main__":
                                             learning_rate=10, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1000, pretrainedSA=pretrainedSA, datadim=batchdim,
+                               n_epochs=5000, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
 
-    images = np.load('/DataScienceBowl/data/SBXtrainImage64')
+    images = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage64')
     images = np.array(images,dtype = 'float64')
+    images = np.true_divide(images,255)
 
     mask_predictions = predict_sa(images, finetunedSA)
     mask_roi = np.reshape(mask_roi, (numimages, 64, 64))
 
-    with open('DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
         pickle.dump(mask_predictions, f)
 
-    with open('/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
     #Just test the output

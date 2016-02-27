@@ -126,7 +126,7 @@ class AutoEncoder(object):
 
 
         # these are the parameters we are optimizing
-        self.params = [self.Whid, self.bhid]
+        self.params = [self.Wvis, self.bvis, self.Whid, self.bhid]
 
     def get_hidden_values(self, input):
         """

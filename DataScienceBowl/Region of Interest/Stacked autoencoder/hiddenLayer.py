@@ -57,10 +57,7 @@ class HiddenLayer(object):
         self.params = [self.W, self.b]
 
         lin_output = T.dot(input, self.W) + self.b
-        self.output = (
-            lin_output if activation is None
-            else activation(lin_output)
-        )
+        self.output = activation(lin_output)
 
 
 def iterate_epochs(n_epochs, numbatches, train_fn, model_class):
