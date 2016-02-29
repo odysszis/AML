@@ -111,7 +111,7 @@ class StackedAutoEncoder(object):
 
 
 
-ss
+
 def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **args):
     '''_
         Pretrains stacked autoencoder
@@ -292,11 +292,11 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1000, model_class=StackedAutoEncoder, datadim=batchdim,
+                               n_epochs=5000, model_class=StackedAutoEncoder, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5000, pretrainedSA=pretrainedSA, datadim=batchdim,
+                               n_epochs=10000, pretrainedSA=pretrainedSA, datadim=batchdim,
                                             learning_rate=10, lam=10^4)
 
 
@@ -309,6 +309,9 @@ if __name__ == "__main__":
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
         pickle.dump(mask_predictions, f)
+
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+        pickle.dump(pretrainedSA, f)
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
