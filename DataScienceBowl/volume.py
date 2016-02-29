@@ -118,6 +118,7 @@ def calc_areas(images):
     areas = [{} for t in range(times)]
     for t in range(times):
         for h in range(slice_locations):
+            # TODO here, maybe we should feed the image to the model and then threshold the output
             areas[t][h] = np.count_nonzero(images[h][t])
     return areas
     

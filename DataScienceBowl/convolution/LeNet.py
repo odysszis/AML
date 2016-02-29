@@ -96,7 +96,7 @@ class LeNetConvPoolLayer(object):
             filter_shape=filter_shape,
             input_shape=image_shape
         )
-        # conv_out should be 30 x 100 x 54 x 54
+        # conv_out should be batch_size x 100 x 54 x 54
 
         # apply sigmoid before pooling
         conv_out = T.nnet.sigmoid( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
@@ -108,7 +108,7 @@ class LeNetConvPoolLayer(object):
             ignore_border=True,
             mode='average_exc_pad'
         )
-        # pooled_out should be 30 x 100 x 9 x 9
+        # pooled_out should be batch_size x 100 x 9 x 9
 
         self.output = pooled_out
 
@@ -195,12 +195,11 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     ######################
     print('... building the model')
 
-    # Reshape matrix of rasterized images of shape (batch_size, 64 * 64)
-    # to a 4D tensor, compatible with our LeNetConvPoolLayer
-    # (28, 28) is the size of MNIST images.
+    # Reshape matrix of images of shape (batch_size, 64 * 64)
+    # to a 4D tensor of shape (batch_size, 1, 64, 64)
     layer0_input = x.reshape((batch_size, 1, 64, 64))
 
-    # Construct the first convolutional pooling layer:
+    # Construct convolutional & pooling layer:
     # filtering reduces the image size to (64-11+1 , 64-11+1) = (54, 54)
     # maxpooling reduces this further to (54/6, 54/6) = (9, 9)
     # 4D output tensor is thus of shape (batch_size, 100, 9, 9)
@@ -208,14 +207,14 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
         rng = rng,
         input = layer0_input,
         filter_shape = (nkerns, 1, 11, 11),
-        image_shape = (batch_size, 1, 64, 64),                # 20 x 100 x 11 x 11
+        image_shape = (batch_size, 1, 64, 64),                # batch_size x 100 x 11 x 11
         poolsize = (6, 6),
         W = W_CNN_input,
         b = b_CNN_input
     )
-    #rng, input, W, b, filter_shape, image_shape, poolsize=(6, 6)
 
-    layer0_output = layer0.output.flatten(2)                # 20 x 8,100
+    # flatten out the input of the logistic layer
+    layer0_output = layer0.output.flatten(2)                # batch_size x 8,100
 
     # classify the values of the fully-connected sigmoidal layer
     layer3 = LogisticRegression(
@@ -226,12 +225,15 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
         b = b_logistic
     )
 
-    layer3_output = layer3.output                           # 20 x 1024 tensor
+    layer3_output = layer3.output                           # batch_size x 1024 tensor
 
-    #cost = 0.5 / batch_size * T.sum( T.sum( layer3_output - y )**2 )    # 20x1024 - 20x1024
-    #cost += 0.0001 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
-    #cost += 0.0001 / 2 * ( T.sum( T.sum( T.sum( T.sum( layer0.params[0] ) ) ) ) )
-    cost = T.mean((layer3_output - y) ** 2)
+    # compute cost
+    #cost = 0.5 * T.mean((layer3_output - y) ** 2)
+    # regularization parameter
+    l = 0.0001
+    # calculate norms for cost
+    l2_squared = (layer0.W ** 2).sum() + (layer3.W ** 2).sum()
+    cost = 0.5 * T.mean((layer3_output - y) ** 2) + 0.5 * l * l2_squared
 
     # create a list of all model parameters to be fit by gradient descent
     params = layer3.params + layer0.params
@@ -239,16 +241,13 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     # create a list of gradients for all model parameters
     grads = T.grad(cost, params)
 
-    # train_model is a function that updates the model parameters by
-    # SGD Since this model has many parameters, it would be tedious to
-    # manually create an update rule for each model parameter. We thus
-    # create the updates list by automatically looping over all
-    # (params[i], grads[i]) pairs.
+    # updates. loop over all parameters and gradients
     updates = [
         (param_i, param_i - learning_rate * grad_i)
         for param_i, grad_i in zip(params, grads)
     ]
 
+    # theano function to evaluate model
     train_model = theano.function(
         [index],
         cost,
@@ -258,7 +257,6 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
             y: train_set_y[index * batch_size: (index + 1) * batch_size]
         }
     )
-    # end-snippet-1
 
     ###############
     # TRAIN MODEL #
@@ -266,8 +264,8 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     print('... fine tuning')
 
     epoch = 0
-    epsilon = 0.0000005
-    last_loss = 0
+    #epsilon = 0.0000005
+    #last_loss = 0
 
     logging.debug('%-10s%-10s%-10s' %('Epoch','Batch','Cost'))
     while (epoch < n_epochs):
@@ -288,7 +286,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
     print('Optimization complete.')
 
-    with open('../data/fine_tune_paramsX.pickle', 'w') as f:
+    with open('../data/fine_tune_paramsXnew.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
@@ -359,14 +357,14 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
-    with open('../data/CNN_outputX.pickle', 'wb') as f:
+    with open('../data/CNN_outputXnew.pickle', 'wb') as f:
         pickle.dump(images, f)
 
 
 if __name__ == '__main__':
     logging.basicConfig(filename='lenet.log', filemode='w', level=logging.DEBUG)
-    # call the following method for fine tuning after pre-training the logistic regression layer
-    #fine_tuning(n_epochs=1000,batch_size=20,logistic_params_path = '../data/logistic_paramsX.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
+    # Fine Tuning of CNN + output layer
+    fine_tuning(n_epochs=1000,batch_size=260,logistic_params_path = '../data/logistic_paramsXnew.pickle',CNN_inputFilters_path = '../data/CNN_inputFilters',CNN_inputBias_path = '../data/CNN_inputBias')
     # call to predict outcome after fine tuning
-    predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_paramsX.pickle')
+    predict(batch_size=1, fine_tuned_params_path = '../data/fine_tune_paramsXnew.pickle')
 

@@ -76,8 +76,7 @@ class LogisticRegression(object):
             self.b = b
 
         # output
-        #self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # 20 x 1024
-        self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )
+        self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # batch_size x 1024
 
         # parameters of the model
         self.params = [self.W, self.b]                                      # W: 1024 x 8100, b: 1024 x 1
@@ -100,8 +99,8 @@ def load_data():
 
     print('... loading data')
 
-    train_set_x = np.load('../data/SBtrainImage64')
-    train_set_y = np.load('../data/SBtrainBinaryMask32')
+    train_set_x = np.load('../data/SBXtrainImage64')
+    train_set_y = np.load('../data/SBXtrainBinaryMask32')
 
     train_set_x = np.asarray(train_set_x, dtype='float64')
     dim = train_set_x.shape
@@ -112,7 +111,6 @@ def load_data():
     dim = train_set_y.shape
     train_set_y = np.reshape(train_set_y, (dim[0], (dim[1]*dim[2])) )
     shared_y = theano.shared(train_set_y.astype(fx), borrow=True)                      # convert to 260 x 1024
-    #shared_y = T.cast(shared_y, 'int64')
 
     rval = [(shared_x, shared_y)]
 

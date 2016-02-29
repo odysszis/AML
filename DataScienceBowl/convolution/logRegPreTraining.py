@@ -47,7 +47,7 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     train_set_x, train_set_y = datasets[0]
     # compute number of mini-batches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
-    n_train_batches /= batch_size                                           # 130
+    n_train_batches /= batch_size
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
@@ -77,11 +77,12 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
     layer3 = LogisticRegression(input = layer0_output, n_in = 8100, n_out = 1024)
     layer3_output = layer3.output                           # batch_size x 1024 tensor
 
-    # cost for pre training
-    #cost = 0.5 / batch_size * T.sum( ( layer3_output - y )**2 )
-    #cost += 0.0001 / 2 * ( T.sum( T.sum( layer3.params[0] ** 2 ) ) )
-    # for now ignore regularization
-    cost = T.mean((layer3_output - y) ** 2)
+    # cost for training
+    #cost = T.mean((layer3_output - y) ** 2)
+    # regularization parameter
+    l = 0.0001
+    l2_squared = (layer3.W ** 2).sum()
+    cost = 0.5 * T.mean((layer3_output - y) ** 2) + 0.5 * l * l2_squared
 
     # parameters to be updated
     params = layer3.params
@@ -123,13 +124,12 @@ def pre_training(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size 
 
     print('Optimization complete.')
 
-    with open('../data/logistic_params.pickle', 'w') as f:
+    with open('../data/logistic_paramsXnew.pickle', 'w') as f:
         pickle.dump([params], f)
 
 
 if __name__ == '__main__':
-    # use batch_size = 260 in order to do training with only one batch
-    # that is train with whole dataset in each epoch
-    pre_training(n_epochs=1000, batch_size=260,
+    # use batch_size = 260 in order to pass all image in each epoch
+    pre_training(n_epochs=1000, batch_size=2860,
                  CNN_inputFilters_path='../data/CNN_inputFilters',
-                 CNN_inputBias_path='../data/CNN_inputBias')          # use batch_size = 260 to pass all images in each epoch
+                 CNN_inputBias_path='../data/CNN_inputBias')
