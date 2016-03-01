@@ -291,7 +291,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
 
 
 
-def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
+def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
     ######################
     #   INITIALIZATIONS  #
@@ -310,9 +310,13 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
     rng = numpy.random.RandomState(23455)
 
-    # load data
-    datasets = load_data()
-    train_set_x, train_set_y = datasets[0]
+    # manipulate data
+
+    train_set_x = numpy.asarray(inputimages, dtype='float64')
+    dim = train_set_x.shape
+    train_set_x = numpy.reshape(train_set_x, (dim[0], (dim[1]*dim[2])))
+    train_set_x = theano.shared(train_set_x.astype(fx), borrow=True)                      # convert to 260 x 4096
+
     n_batches = train_set_x.get_value(borrow=True).shape[0]
     n_batches /= batch_size
 

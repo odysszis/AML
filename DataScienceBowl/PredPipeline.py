@@ -17,9 +17,10 @@ from LeNet import predict as CNNpred
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
 from stackedAutoencoder import predict as SApred
-
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
-import active_contour
+import active_contour as AC
+
+
 
 
 class Patient(object):
@@ -121,17 +122,54 @@ class Patient(object):
         self.dist = dist
         self.area_multiplier = x * y
 
+
+
     def predictContours(self):
 
         #images are slice * time * height * width
-        self.predROIs = np.array([CNNpred(self.images[s,:], 'path') for s in self.slices])
+        self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
+                                          fine_tuned_params_path = '../data/fine_tune_paramsXnew.pickle') for s in self.slices])
 
-        self.predSAContours = np.array([SApred(self.predROIs[s,:], 'path') for s in self.slices])
-
-        self.predSAContours = np.array([SApred(self.predROIs[s,:], 'path') for s in self.slices])
-
+        self.images_roi = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:], roi_dim=(100,100), newsize=(64, 64))
+                              for s in self.slices])
 
 
+        self.predSAContours = np.array([SApred(self.images_roi[s,:],
+                                               '../data/SA_model.pickle') for s in self.slices])
+
+
+        self.predACContours = np.array([[AC.evolve_contour(lv = self.images[s,:], roi=self.predSAContours[s,t])
+                                         for t in self.time] for s in self.slices])
+                                         #should images be cropped with region of interest before feeding?
+
+
+def crop_ROI(images, roi, roi_dim, newsize):
+
+    dim = images.shape
+    image_roi = []
+
+    for i in range(0, dim[0]):
+
+        # prep image files including up sampling roi to 256*256
+        image = images[i, :, :]
+        region = roi[i, :, :]
+        region = misc.imresize(region, (dim[1], dim[2]))
+
+        # get roi co-ords for cropping; using centre
+        rows, cols = np.where(region == 1)
+        cen_x, cen_y = (np.median(cols), np.median(rows))
+
+        # execute  cropping on the image to produce ROI
+        image = image[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
+                cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
+
+        image = misc.imresize(image, newsize)
+        # collect
+        image_roi.append(image)
+
+    image_roi = np.array(image_roi)
+
+    return image_roi
 
 def calc_areas(images):
     # images are circular binary masks
@@ -156,7 +194,7 @@ def calc_volume(areas, mult, dist):
 def calc_volarea(patient):
     # compute the areas of all images. areas: [16 x 30] dictionary (I think)
 
-    areas = calc_areas(patient.predCAContours)
+    areas = calc_areas(patient.predACContours)
     volumes = [calc_volume(area, patient.area_multiplier, patient.dist) for area in areas]
     # find edv and esv
     edv = max(volumes)
@@ -172,10 +210,11 @@ def calc_volarea(patient):
 
 
 
+if __name__ == "__main__":
 
 
 # contains 'train', 'validate', etc
-data_path = '/home/odyss/Documents/ucl/aml/kaggle/DataScienceBowl/data/'
+data_path = '.../AML/DataScienceBowl/data/'
 
 labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
 label_dict = {}

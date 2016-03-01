@@ -149,15 +149,14 @@ def get_binary_masks(contourdata, mask_region, preprocess, **args):
 
         cen_x, cen_y = (np.median(cols), np.median(rows))
 
-        mask[cen_x - (mask_region[0]/2):cen_x + (mask_region[0]/2),
-                   cen_y - (mask_region[1]/2):cen_y + (mask_region[1]/2)] = 1
+        mask[cen_y - (mask_region[1]/2):cen_y + (mask_region[1]/2),
+            cen_x - (mask_region[0]/2):cen_x + (mask_region[0]/2)] = 1
 
         # mask[cen_x, cen_y]=1  Illustrate centre if required
 
         mask_binary.append(preprocess(mask,**args))
 
     mask_binary = np.array(mask_binary)
-
 
     return mask_binary
 

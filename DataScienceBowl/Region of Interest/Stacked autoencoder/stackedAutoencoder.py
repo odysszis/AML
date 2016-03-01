@@ -200,11 +200,14 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
-def predict_sa(images, SA):
+def predict_sa(images, trained_SA_path = '../data/fine_tune_paramsXnew.pickle'):
+
+    with open(trained_SA_path) as f:
+            SA = pickle.load(f)
 
     dim = images.shape
-
     images = np.reshape(images, (dim[0], (64*64)))
+    #MUST CROP images either in pipeline or in here
     predict_model = theano.function(
             inputs = [],
             outputs= SA.logLayer.y_pred,
@@ -212,6 +215,7 @@ def predict_sa(images, SA):
     preds = predict_model()
     mask_predictions= np.reshape(preds, (dim[0], 64, 64))
     masks = np.array(mask_predictions)
+
     return masks
 
 
@@ -235,14 +239,14 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
         cen_x, cen_y = (np.median(cols), np.median(rows))
 
         # execute  cropping on the image to produce ROI
-        image = image[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
-                cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+        image = image[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
+                cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
 
         image = misc.imresize(image, newsize)
 
         # execute cropping on the contour
-        contour = contour[cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2),
-                  cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2)]
+        contour = contour[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
+                  cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
 
         contour = misc.imresize(contour, newsize)
 

@@ -8,16 +8,16 @@ import skfmm
 from matplotlib import pyplot as plt
 import copy
 import pdb  # debugger
+import time
 
-
-def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 5000):
+def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 500):
     """
     evolve_contour performs an active contour algorithm on a level set curve,
     specifically on the zero level of a signed distance function. The zero-level
     is represented by discrete points on a grid.
     Each point is evolved in the direction where some energy function decreases most
-    :param lv: 64 x 64 binary array
-    :param roi: 64 x 64 region of interest (gray scale)
+    :param lv: 64 x 64 binary array predicted
+    :param roi: 64 x 64 region of interest (gray scale) actual image
     :param deltaT: the step size in time
     :param alpha1, alpha2, alpha3: parameters for energy components
     :param eps: parameter for the function approximating the delta_0 function
@@ -36,24 +36,33 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
     phi = copy.deepcopy(lv)
     phi[phi == 1] = -1
     phi[phi == 0] = 1
-    phi = skfmm.distance(phi)  # now phi is a signed distance function which is negative inside the contour and
+    phi = 10 * skfmm.distance(phi)  # now phi is a signed distance function which is negative inside the contour and
+
     # positive outside
     # we will store the initialization of phi again in an extra variable because
     # we have to recall it in every evolution step
     phi0 = copy.deepcopy(phi)
-
     # START ENERGY OPTIMIZATION
     convergence = False
     cIter = 1
+    # create imshow object. in each iteration update that figure
+
     while not convergence:
 
         # 1. compute all finite differences
         # this will be done by the divergence function, so forget about this step
+        # if cIter == 521:
+        #    pdb.set_trace()
+        # 2. compute averages inside and outside contour
+        # 2a. average outside
+        c1 = np.sum(roi * heavyside(phi)) / (phi[phi >= 0].size + 0.00000001)
+        c2 = np.sum(roi * heavyside(-phi)) / (phi[phi < 0].size + 0.00000001)
 
+
+        """
         # 2. compute averages inside and outside contour
         # 2a. determine which pixels are inside the contour and which are outside
         # a pixel at (i,j) is inside the contour if phi(i,j) < 0
-
         # Create a mask which is True if phi<=0 and False else
         phi_mask = copy.deepcopy(-phi) # now phi is 1 inside contour and -1 outside
         phi_mask[phi_mask < 0] = 0     # now phi is 1 inside contour and 0 outside
@@ -65,6 +74,9 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
         avg_roi_outside = np.mean(roi[-phi_mask])
         c1 = avg_roi_outside
         c2 = avg_roi_inside
+        """
+
+        # pdb.set_trace()
 
         # 3. Compute divergence
         old_phi = copy.deepcopy(phi)
@@ -72,9 +84,25 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
 
         # 4. Evolve contour
         # pdb.set_trace()
-        force = delta_eps(phi, eps) * (alpha1 * div + alpha2 * np.power(roi - c2, 2)
-                                                     - alpha2 * np.power(roi - c1, 2)
-                                                     - 2 * alpha3 * (phi - phi0))
+        #force = delta_eps(phi, eps) * (alpha1 * div + (alpha2 * np.power(roi - c2, 2))
+        #                                             - (alpha2 * np.power(roi - c1, 2))
+        #                                                    - (2 * alpha3 * (phi - phi0)))
+        # pdb.set_trace()
+        force = alpha1 * div + alpha2 * np.power(roi - c2, 2) - alpha2 * np.power(roi - c1, 2) - 2 * alpha3 * (phi - phi0)
+
+        """
+        avgout = np.power(roi - c1, 2)
+        plt.close()
+        plt.imshow(avgout)
+        plt.show()
+
+        time.sleep(3)
+
+        avgin = np.power(roi - c2, 2)
+        plt.close()
+        plt.imshow(avgin)
+        plt.show()
+        """
         phi += deltaT * force
 
         # 6. stop if phi has converged or maximum number of iterations has been reached
@@ -82,8 +110,10 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
             convergence = True
             print("converged")
             # Draw final level set function
-            pdb.set_trace()
-            plt.imshow(phi)
+            contour = copy.deepcopy(phi)
+            contour[contour > 0] = 0
+            contour[contour < 0] = 1
+            plt.imshow(contour)
             plt.show()
         elif cIter % n_reinit == 0:  # Check if we have to reinitialize phi
             # reinitialize by figuring out where phi is neg. and where pos -> define intermediate contour as points
@@ -99,28 +129,18 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=0.5, alpha3=0.25, eps=1
             print(cIter)
         else:
             cIter += 1
-            print(cIter)
-            # draw contour
+            print("cIter", cIter)
+            # draw contour: update the pixels and then draw the figure
+            # pdb.set_trace()
+            if cIter % n_max == 0:
+                contour = copy.deepcopy(phi)
+                contour[contour > 0] = 0
+                contour[contour < 0] = 1
+                contour = contour + roi
+                plt.imshow(contour)
+                plt.show()
+
     return phi
-
-
-def get_contour(s):
-    """
-    get_contour takes binary array LV array and extracts the pixels on the contour
-    The result is again a binary image where the inner part of the LV is also black.
-    Only the contour appears white
-    :param s: binary array
-    :return: binary array
-    """
-    # loop through every pixel of the binary image and "keep" only those
-    # which are foreground and neighbored by a background pixel
-    bound = np.zeros(np.shape(s))
-    for k, l in np.ndindex(np.shape(s)):
-        if 0 < k < (np.shape(s)[0] - 1) and 0 < l < (np.shape(s)[1] - 1):
-            if s[k, l] == 1 and \
-                    (s[k - 1, l] == 0 or s[k + 1, l] == 0 or s[k, l - 1] == 0 or s[k, l + 1] == 0):
-                bound[k, l] = 1
-    return bound
 
 
 def hessian(x):
@@ -163,15 +183,41 @@ def get_div(x):
     dxx = h[1, 1]
     # compute divergence
     divisor = np.power((np.power(dx, 2) + np.power(dy, 2)), 1.5)
-    divisor[divisor == 0] = 0.001
+    divisor[divisor == 0] = 0.00000001
     dividend = dxx * np.power(dy, 2) - 2 * dx * dy * dyx + dyy * np.power(dx, 2)
     div = dividend / divisor
 
     # Chen and Vese conduct additionally the following steps
-    # div = div * np.power(np.power(dx, 2) + np.power(dy, 2), 0.5) / (np.max(div * np.power(np.power(dx, 2) + np.power(dy, 2), 0.5)))
-    # div = div / np.max(div)
+    div = div * np.power(np.power(dx, 2) + np.power(dy, 2), 0.5) / (np.max(div * np.power(np.power(dx, 2) + np.power(dy, 2), 0.5)))
+    div = div / np.max(div)
     return div
 
 
 def delta_eps(x, eps):
     return eps / (np.pi * (np.power(eps, 2) + np.power(x, 2)))
+
+def heavyside(phi):
+    """
+    Compute smoothed Heavyside function of numpy array
+    :param phi: 64 x 64 numpy array (the level set function phi from above)
+    :return: smoothed Heavyside function: H = 1 where phi > Epsilon
+                                          H = smooths down from 1 to 0, -Epsilon <= phi <= Epsilon
+                                          H = 0 where phi < -Epsilon
+    """
+    # pdb.set_trace()
+
+    Epsilon = 1e-5
+    H = copy.deepcopy(phi)
+    H[H > Epsilon] = 1
+    H[H < -Epsilon] = 0
+
+    # create mask: True where -Epsilon < phi < Epsilon, False else
+    if np.any(phi[np.abs(phi) < Epsilon]):
+        m2 = copy.deepcopy(phi)
+        m2[m2 > Epsilon] = 0
+        m2[m2 < -Epsilon] = 0
+        m2[m2 != 0] = 1
+        mask = np.ma.make_mask(m2)
+        H[mask] = 1/2 * (1 + H[mask]/Epsilon + 1/np.pi * np.sin(np.pi * H[mask]/Epsilon))
+
+    return H
