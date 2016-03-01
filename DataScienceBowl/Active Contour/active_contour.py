@@ -221,3 +221,4 @@ def heavyside(phi):
         H[mask] = 1/2 * (1 + H[mask]/Epsilon + 1/np.pi * np.sin(np.pi * H[mask]/Epsilon))
 
     return H
+
