@@ -266,6 +266,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     epoch = 0
     #epsilon = 0.0000005
     #last_loss = 0
+    #
 
     logging.debug('%-10s%-10s%-10s' %('Epoch','Batch','Cost'))
     while (epoch < n_epochs):
