@@ -16,7 +16,7 @@ import LeNet
 from LeNet import predict as CNNpred
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
-from stackedAutoencoder import predict as SApred
+from stackedAutoencoder import predict_sa as SApred
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 
@@ -84,7 +84,7 @@ class Patient(object):
     def _read_dicom_image(self, filename):
         d = dicom.read_file(filename)
         img = d.pixel_array.astype('float')
-        img = crop_resize(img, newsize=(64,64))
+        img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
         img = np.true_divide(img,255)
 
         return img
@@ -126,9 +126,17 @@ class Patient(object):
 
     def predictContours(self):
 
+        '''
+        Method for pushing images loaded by _read_all_dicom_images through full learned network
+        to predict the resulting contour
+
+        :return:
+        '''
+
         #images are slice * time * height * width
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '../data/fine_tune_paramsXnew.pickle') for s in self.slices])
+                                          fine_tuned_params_path = '../data/fine_tune_paramsXnew.pickle')
+                                  for s in self.slices])
 
         self.images_roi = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:], roi_dim=(100,100), newsize=(64, 64))
                               for s in self.slices])
@@ -138,9 +146,8 @@ class Patient(object):
                                                '../data/SA_model.pickle') for s in self.slices])
 
 
-        self.predACContours = np.array([[AC.evolve_contour(lv = self.images[s,:], roi=self.predSAContours[s,t])
+        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s.t], roi=self.images_roi[s,t])
                                          for t in self.time] for s in self.slices])
-                                         #should images be cropped with region of interest before feeding?
 
 
 def crop_ROI(images, roi, roi_dim, newsize):
@@ -213,29 +220,29 @@ def calc_volarea(patient):
 if __name__ == "__main__":
 
 
-# contains 'train', 'validate', etc
-data_path = '.../AML/DataScienceBowl/data/'
+    # contains 'train', 'validate', etc
+    data_path = '.../AML/DataScienceBowl/data/'
 
-labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
-label_dict = {}
-for label in labels:
-    label_dict[label[0]] = (label[2],label[1])
+    labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
+    label_dict = {}
+    for label in labels:
+        label_dict[label[0]] = (label[2],label[1])
 
 
-# contains '1' (maybe patient '1')
-train_path = os.path.join(data_path, 'train')
-# contains 'sax5', 'sax6', ...
-studies = next(os.walk(train_path))[1]
+    # contains '1' (maybe patient '1')
+    train_path = os.path.join(data_path, 'train')
+    # contains 'sax5', 'sax6', ...
+    studies = next(os.walk(train_path))[1]
 
-results_csv = open('results.csv', 'w')
+    results_csv = open('results.csv', 'w')
 
-for study in studies:
-    patient = Patient(os.path.join(train_path, study), study)
-    print 'Processing patient %s...' % patient.name
-    try:
-        calc_volarea(patient)
-        (edv, esv) = label_dict[int(patient.name)]
-        results_csv.write('%s,%f,%f,%f,%f\n' % (patient.name, edv, esv, patient.edv, patient.esv))
-    except Exception as e:
-        print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
-    results_csv.close()
+    for study in studies:
+        patient = Patient(os.path.join(train_path, study), study)
+        print 'Processing patient %s...' % patient.name
+        try:
+            calc_volarea(patient)
+            (edv, esv) = label_dict[int(patient.name)]
+            results_csv.write('%s,%f,%f,%f,%f\n' % (patient.name, edv, esv, patient.edv, patient.esv))
+        except Exception as e:
+            print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
+        results_csv.close()
