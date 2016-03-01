@@ -13,12 +13,13 @@ from LoadData import crop_resize
 import sys
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/convolution/')
 import LeNet
-from LeNet import predict
-sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder')
-from stackedAutoencoder import predict
+from LeNet import predict as CNNpred
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+import stackedAutoencoder
+from stackedAutoencoder import predict as SApred
 
-
-
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
+import active_contour
 
 
 class Patient(object):
@@ -116,19 +117,20 @@ class Patient(object):
         # from second) or equal to first slice's thickness. I THINK the second
         # logic is better
         #
-        # TODO
-        #
         # maybe set dist = d1.SliceThickness
         self.dist = dist
         self.area_multiplier = x * y
 
     def predictContours(self):
 
-        self.predROIs = CNNPred(self.images, path)
-        self.predSAContours = SA(self.predROIs, path)
-        self.predCAContours = AC(self.predSAContours,path) # for i in ....
+        #images are slice * time * height * width
+        self.predROIs = np.array([CNNpred(self.images[s,:], 'path') for s in self.slices])
 
-        # sets dist equal to the two first slices distance (subtracting first
+        self.predSAContours = np.array([SApred(self.predROIs[s,:], 'path') for s in self.slices])
+
+        self.predSAContours = np.array([SApred(self.predROIs[s,:], 'path') for s in self.slices])
+
+
 
 
 def calc_areas(images):
