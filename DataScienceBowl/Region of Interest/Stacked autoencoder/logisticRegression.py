@@ -71,7 +71,7 @@ class LogisticRegression(object):
         self.params = [self.W, self.b]
 
 
-    def get_cost_updates(self, datadim, learning_rate, lam):
+    def get_cost_updates(self, learning_rate, lam, rho=0, beta=0):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -84,7 +84,8 @@ class LogisticRegression(object):
         """
 
         # Compute the cost
-        cost = T.mean((self.Y - self.p_y_given_x) ** 2) # TODO: extend with regularisation terms
+        l2_squared = (self.W ** 2).sum()
+        cost = 0.5*T.mean((self.p_y_given_x-self.Y ) ** 2) + (0.5*lam*l2_squared) # TODO: extend with regularisation terms
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -157,5 +158,5 @@ if __name__ == "__main__":
     weights, bias = train_logreg(train_data=train, train_masks=trainMask,
                                             numbatches=numbatches, n_epochs=10000,
                                             model_class=LogisticRegression, datadim=batchdim,
-                                            learning_rate=10, lam=10^4)
+                                            learning_rate=10, lam=0.0001)
 

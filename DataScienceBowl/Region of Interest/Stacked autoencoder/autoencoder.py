@@ -126,7 +126,7 @@ class AutoEncoder(object):
 
 
         # these are the parameters we are optimizing
-        self.params = [self.Wvis, self.bvis, self.Whid, self.bhid]
+        self.params = [self.Whid, self.bhid, self.Wvis, self.bvis]
 
     def get_hidden_values(self, input):
         """
@@ -141,7 +141,7 @@ class AutoEncoder(object):
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
     # pass every minibatch through the autoencoder and calculate the y's
-    def get_cost_updates(self, datadim, learning_rate, lam):
+    def get_cost_updates(self, learning_rate, lam = 10^-4, beta=3, rho = 0.1):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -159,8 +159,10 @@ class AutoEncoder(object):
         y = self.get_output(h)
 
         # Compute the cost
-
-        cost = T.mean((y - self.X) ** 2) # TODO: extend with regularisation terms
+        l2_squared = (self.Wvis ** 2).sum() + (self.Whid ** 2).sum()
+        #rho_hat = T.sum(h, axis=0)/(T.shape(h)[0])
+        KL = T.abs_(rho - T.mean(h))               # True KL?? How to deal with distribution...T.log(T.true_div(rho,rho_hat))
+        cost = 0.5*T.mean((y - self.X) ** 2) +0.5*lam*l2_squared + beta*KL
 
 
         # Compute updates
@@ -219,7 +221,7 @@ if __name__ == "__main__":
 
     # load sunny data and collapse to correct dim
 
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBtrainImage_batch')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage_batch')
     dim = train.shape
     train = np.reshape(train, (dim[0], (dim[1]*dim[2])))
     train = np.array(train, dtype='float64')
@@ -227,7 +229,8 @@ if __name__ == "__main__":
     batchdim = train[0]/numbatches
 
     W_hid, b_hid = train_ac(train_data=train, numbatches=numbatches, n_epochs=10000,
-                               model_class = AutoEncoder, datadim=batchdim, learning_rate=10, lam=10^4)
+                               model_class = AutoEncoder, learning_rate=10, lam=10^4,
+                            beta=3, rho = 0.1)
 
     W_hid = np.array(W_hid)
     b_hid = np.array(b_hid)
@@ -240,4 +243,3 @@ if __name__ == "__main__":
     W_two = W_hid.dump('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_inputFilters')
     b_hid = b_hid .dump('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_inputBias')
 
-# TODO include regularisation terms with tensor operations

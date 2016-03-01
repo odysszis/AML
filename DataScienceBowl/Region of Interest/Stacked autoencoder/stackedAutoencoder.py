@@ -87,7 +87,7 @@ class StackedAutoEncoder(object):
 
         self.params.extend(self.logLayer.params)
 
-    def get_cost_updates(self, datadim, learning_rate, lam):
+    def get_cost_updates(self, learning_rate, lam):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -100,7 +100,11 @@ class StackedAutoEncoder(object):
         """
 
         # Compute the cost
-        cost = T.mean((self.Y - self.logLayer.p_y_given_x) ** 2) # TODO: extend with regularisation terms
+        l2_squared= 0
+        for i in xrange(self.n_layers):
+            l2_squared += (self.sigmoid_layers[i].W** 2).sum()
+        l2_squared = l2_squared + (self.logLayer.W** 2).sum()
+        cost = 0.5*T.mean((self.Y - self.logLayer.p_y_given_x) ** 2) + (0.5*lam*l2_squared)
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -292,12 +296,12 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5000, model_class=StackedAutoEncoder, datadim=batchdim,
-                                            learning_rate=10, lam=10^4)
+                               n_epochs=1, model_class=StackedAutoEncoder,
+                                            learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=10000, pretrainedSA=pretrainedSA, datadim=batchdim,
-                                            learning_rate=10, lam=10^4)
+                               n_epochs=1, pretrainedSA=pretrainedSA,
+                                            learning_rate=10, lam=0.0001)
 
 
     images = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage64')

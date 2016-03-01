@@ -96,7 +96,7 @@ class LeNetConvPoolLayer(object):
             filter_shape=filter_shape,
             input_shape=image_shape
         )
-        # conv_out should be batch_size x 100 x 54 x 54
+        # copv_out should be batch_size x 100 x 54 x 54
 
         # apply sigmoid before pooling
         conv_out = T.nnet.sigmoid( conv_out + self.b.dimshuffle('x', 0, 'x', 'x') )
@@ -359,6 +359,8 @@ def predict(nkerns = 100, batch_size = 260, fine_tuned_params_path = None):
 
     with open('../data/CNN_outputXnew.pickle', 'wb') as f:
         pickle.dump(images, f)
+
+    return images
 
 
 if __name__ == '__main__':
