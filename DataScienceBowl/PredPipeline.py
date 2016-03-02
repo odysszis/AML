@@ -17,6 +17,7 @@ from LeNet import predict as CNNpred
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
 from stackedAutoencoder import predict_sa as SApred
+from stackedAutoencoder import crop_ROI
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 
@@ -73,6 +74,15 @@ class Patient(object):
         self.slices_map = slices_map
         Patient.patient_count += 1
         self.name = study
+        self.images = []
+        self.predROIs = []
+        self.imagesROIs = []
+        self.predSAContours = []
+        self.predACContours = []
+
+
+
+
 
     # returns the name of a file of a specific slice on specific time
     def _filename(self, cslice, time):
@@ -129,54 +139,28 @@ class Patient(object):
         '''
         Method for pushing images loaded by _read_all_dicom_images through full learned network
         to predict the resulting contour
+           STEPS: 1) Feedforward through CNN, followed by through SA, followed by calling AC model, giving final result
 
         :return:
         '''
 
         #images are slice * time * height * width
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '../data/fine_tune_paramsXnew.pickle')
+                                          fine_tuned_params_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
                                   for s in self.slices])
 
-        self.images_roi = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:], roi_dim=(100,100), newsize=(64, 64))
+        self.imagesROIs = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:],
+                                             roi_dim=(100,100), newsize=(64, 64))
                               for s in self.slices])
 
+        self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
+                                               '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+                                        for s in self.slices])
 
-        self.predSAContours = np.array([SApred(self.images_roi[s,:],
-                                               '../data/SA_model.pickle') for s in self.slices])
-
-
-        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s.t], roi=self.images_roi[s,t])
+        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s.t], roi=self.imagesROIs[s,t])
                                          for t in self.time] for s in self.slices])
 
 
-def crop_ROI(images, roi, roi_dim, newsize):
-
-    dim = images.shape
-    image_roi = []
-
-    for i in range(0, dim[0]):
-
-        # prep image files including up sampling roi to 256*256
-        image = images[i, :, :]
-        region = roi[i, :, :]
-        region = misc.imresize(region, (dim[1], dim[2]))
-
-        # get roi co-ords for cropping; using centre
-        rows, cols = np.where(region == 1)
-        cen_x, cen_y = (np.median(cols), np.median(rows))
-
-        # execute  cropping on the image to produce ROI
-        image = image[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
-                cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
-
-        image = misc.imresize(image, newsize)
-        # collect
-        image_roi.append(image)
-
-    image_roi = np.array(image_roi)
-
-    return image_roi
 
 def calc_areas(images):
     # images are circular binary masks
@@ -216,12 +200,11 @@ def calc_volarea(patient):
 
 
 
-
 if __name__ == "__main__":
 
 
     # contains 'train', 'validate', etc
-    data_path = '.../AML/DataScienceBowl/data/'
+    data_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data'
 
     labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
     label_dict = {}
@@ -238,6 +221,8 @@ if __name__ == "__main__":
 
     for study in studies:
         patient = Patient(os.path.join(train_path, study), study)
+        patient._read_all_dicom_images()
+        patient.predictContours()
         print 'Processing patient %s...' % patient.name
         try:
             calc_volarea(patient)

@@ -203,34 +203,31 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
 def predict_sa(images, trained_SA_path = '../data/fine_tune_paramsXnew.pickle'):
 
     with open(trained_SA_path) as f:
-            SA = pickle.load(f)
+         SA = pickle.load(f)
 
     dim = images.shape
-    images = np.reshape(images, (dim[0], (64*64)))
-    #MUST CROP images either in pipeline or in here
+    images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
+
     predict_model = theano.function(
             inputs = [],
             outputs= SA.logLayer.y_pred,
             givens={SA.X: images})
     preds = predict_model()
-    mask_predictions= np.reshape(preds, (dim[0], 64, 64))
+    mask_predictions= np.reshape(preds, (dim[0], dim[1], dim[2]))
     masks = np.array(mask_predictions)
 
     return masks
 
 
-def crop_ROI(images, contours, roi, roi_dim, newsize):
-
+def crop_ROI(images, roi, roi_dim, newsize):
 
     dim = images.shape
     image_roi = []
-    contour_roi = []
 
     for i in range(0, dim[0]):
 
         # prep image files including up sampling roi to 256*256
         image = images[i, :, :]
-        contour = contours[i, :, :]
         region = roi[i, :, :]
         region = misc.imresize(region, (dim[1], dim[2]))
 
@@ -244,20 +241,15 @@ def crop_ROI(images, contours, roi, roi_dim, newsize):
 
         image = misc.imresize(image, newsize)
 
-        # execute cropping on the contour
-        contour = contour[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
-                  cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
+        if np.max(image) >1:
+            image = np.true_divide(image, 255)
 
-        contour = misc.imresize(contour, newsize)
-
-        # collect
         image_roi.append(image)
-        contour_roi.append(contour)
 
     image_roi = np.array(image_roi)
-    contour_roi = np.array(contour_roi)
 
-    return image_roi, contour_roi
+    return image_roi
+
 
 if __name__ == "__main__":
 
@@ -269,12 +261,7 @@ if __name__ == "__main__":
 
     dimimages = roi.shape
     numimages = dimimages[0]
-    # print(roi.shape)
-    # plt.imshow(train[815,:,:])
-    # plt.imshow(mask[815,:,:])
-    # plt.imshow(mask[815,:,:])
-    # print(train[816,:,:].shape)
-    # plt.show()
+
 
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
@@ -284,9 +271,9 @@ if __name__ == "__main__":
         roi_pred[roi_pred >= thres ] = 1
         roi_pred[roi_pred < thres ] = 0
 
-    train_roi, mask_roi =crop_ROI(images=train, contours=mask,
-                                  roi=roi, roi_dim=(100,100), newsize=(64, 64))
-    train_roi = np.true_divide(train_roi,255)
+    train_roi =crop_ROI(images=train, roi=roi, roi_dim=(100,100), newsize=(64, 64))
+
+    mask_roi =crop_ROI(images=mask, roi=roi, roi_dim=(100,100), newsize=(64, 64))
 
     dim = mask_roi.shape
 
@@ -300,42 +287,45 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, model_class=StackedAutoEncoder,
+                               n_epochs=5, model_class=StackedAutoEncoder,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, pretrainedSA=pretrainedSA,
+                               n_epochs=5, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
-    images = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage64')
-    images = np.array(images,dtype = 'float64')
-    images = np.true_divide(images,255)
-
-    mask_predictions = predict_sa(images, finetunedSA)
-    mask_roi = np.reshape(mask_roi, (numimages, 64, 64))
-
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
-        pickle.dump(mask_predictions, f)
-
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpremodel', 'wb') as f:
         pickle.dump(pretrainedSA, f)
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
+
+    train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
+    mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))
+    mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+
+
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+        pickle.dump(mask_predictions, f)
+
+
+
     #Just test the output
 
-    for i in range(0, 4):
-        plt.subplot(1,5,1)
+    for i in range(0, 10):
+        plt.subplot(1,6,1)
         plt.imshow(train[i,:,:])
-        plt.subplot(1,5,2)
+        plt.subplot(1,6,2)
         plt.imshow(mask[i,:,:])
-        plt.subplot(1,5,3)
+        plt.subplot(1,6,3)
         plt.imshow(misc.imresize(roi[i,:,:], (64,64)))
-        plt.subplot(1,5,4)
+        plt.subplot(1,6,4)
         plt.imshow(mask_roi[i,:,:])
-        plt.subplot(1,5,5)
+        plt.subplot(1,6,5)
+        plt.imshow(train_roi[i,:,:])
+        plt.subplot(1,6,6)
         plt.imshow(mask_predictions[i,:,:])
         plt.show()
 

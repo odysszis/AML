@@ -141,7 +141,7 @@ class AutoEncoder(object):
         return T.nnet.sigmoid(T.dot(hidden, self.Wvis) + self.bvis)
 
     # pass every minibatch through the autoencoder and calculate the y's
-    def get_cost_updates(self, learning_rate, lam = 10^-4, beta=3, rho = 0.1):
+    def get_cost_updates(self, learning_rate, lam = 0.0001, beta=3, rho = 0.1):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
@@ -160,7 +160,7 @@ class AutoEncoder(object):
 
         # Compute the cost
         l2_squared = (self.Wvis ** 2).sum() + (self.Whid ** 2).sum()
-        #rho_hat = T.sum(h, axis=0)/(T.shape(h)[0])
+        rho_hat = T.sum(h, axis=0)/(T.shape(h)[0])
         KL = T.abs_(rho - T.mean(h))               # True KL?? How to deal with distribution...T.log(T.true_div(rho,rho_hat))
         cost = 0.5*T.mean((y - self.X) ** 2) +0.5*lam*l2_squared + beta*KL
 

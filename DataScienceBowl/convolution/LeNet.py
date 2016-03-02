@@ -361,7 +361,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
-    with open('../data/CNN_outputXnew.pickle', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'wb') as f:
         pickle.dump(images, f)
 
     return images

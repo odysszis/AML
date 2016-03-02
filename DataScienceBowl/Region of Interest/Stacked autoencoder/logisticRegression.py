@@ -85,7 +85,7 @@ class LogisticRegression(object):
 
         # Compute the cost
         l2_squared = (self.W ** 2).sum()
-        cost = 0.5*T.mean((self.p_y_given_x-self.Y ) ** 2) + (0.5*lam*l2_squared) # TODO: extend with regularisation terms
+        cost = 0.5*T.mean((self.p_y_given_x-self.Y ) ** 2) + (0.5*lam*l2_squared)
 
         # Compute updates
         gparams = T.grad(cost, self.params)
