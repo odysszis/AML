@@ -94,7 +94,7 @@ class LeNetConvPoolLayer(object):
             input=input,
             filters=self.W,
             filter_shape=filter_shape,
-            input_shape=image_shape
+            image_shape=image_shape
         )
         # copv_out should be batch_size x 100 x 54 x 54
 
@@ -305,8 +305,18 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     else:
         with open(fine_tuned_params_path) as f:
             params = pickle.load(f)
+
         # load pre-trained parameters
-        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params[0]
+        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params
+        W_logistic = numpy.asarray(W_logistic,dtype='float64')
+        b_logistic = numpy.asarray(b_logistic,dtype='float64')
+        W_CNN_input = numpy.asarray(W_CNN_input,dtype='float64')
+        b_CNN_input= numpy.asarray(b_CNN_input,dtype='float64')
+
+        W_logistic = theano.shared(W_logistic.astype(fx), borrow=True)
+        b_logistic = theano.shared(b_logistic.astype(fx), borrow=True)
+        W_CNN_input = theano.shared(W_CNN_input.astype(fx), borrow=True)
+        b_CNN_input= theano.shared(b_CNN_input.astype(fx), borrow=True)
 
     rng = numpy.random.RandomState(23455)
 

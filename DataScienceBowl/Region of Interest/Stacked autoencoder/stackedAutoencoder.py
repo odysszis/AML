@@ -209,10 +209,10 @@ def predict_sa(images, trained_SA_path = '../data/fine_tune_paramsXnew.pickle'):
     images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
 
     predict_model = theano.function(
-            inputs = [],
-            outputs= SA.logLayer.y_pred,
-            givens={SA.X: images})
-    preds = predict_model()
+            inputs = [SA.X],
+            outputs= SA.logLayer.y_pred)
+
+    preds = predict_model(images)
     mask_predictions= np.reshape(preds, (dim[0], dim[1], dim[2]))
     masks = np.array(mask_predictions)
 
@@ -287,11 +287,11 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5, model_class=StackedAutoEncoder,
+                               n_epochs=1, model_class=StackedAutoEncoder,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=5, pretrainedSA=pretrainedSA,
+                               n_epochs=1, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
@@ -300,7 +300,6 @@ if __name__ == "__main__":
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
-
 
     train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
     mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))

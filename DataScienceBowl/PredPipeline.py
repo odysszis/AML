@@ -80,10 +80,6 @@ class Patient(object):
         self.predSAContours = []
         self.predACContours = []
 
-
-
-
-
     # returns the name of a file of a specific slice on specific time
     def _filename(self, cslice, time):
         return os.path.join(self.directory, 'sax_%d' % cslice,
@@ -157,7 +153,7 @@ class Patient(object):
                                                '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
                                         for s in self.slices])
 
-        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s.t], roi=self.imagesROIs[s,t])
+        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
                                          for t in self.time] for s in self.slices])
 
 
