@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
 
     # contains 'train', 'validate', etc
-    data_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data'
+    data_path = '../DataScienceBowl/data'
 
     labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
     label_dict = {}
