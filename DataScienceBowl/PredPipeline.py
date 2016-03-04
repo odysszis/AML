@@ -143,18 +143,18 @@ class Patient(object):
         #images are slice * time * height * width
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
                                           fine_tuned_params_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
-                                  for s in self.slices])
+                                  for s in range(0, len(self.slices))])
 
         self.imagesROIs = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:],
                                              roi_dim=(100,100), newsize=(64, 64))
-                              for s in self.slices])
+                              for s in range(0, len(self.slices))])
 
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
                                                '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
-                                        for s in self.slices])
+                                        for s in range(0, len(self.slices))])
 
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
-                                         for t in self.time] for s in self.slices])
+                                         for t in range(0, len(self.time))] for s in range(0, len(self.slices))])
 
 
 
