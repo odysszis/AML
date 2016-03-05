@@ -180,7 +180,7 @@ def calc_volume(areas, mult, dist):
 
 
 def calc_volarea(patient):
-    # compute the areas of all images. areas: [16 x 30] dictionary (I think)
+    # compute the areas of all images. areas:
 
     areas = calc_areas(patient.predACContours)
     volumes = [calc_volume(area, patient.area_multiplier, patient.dist) for area in areas]
