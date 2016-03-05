@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-class StackedAutoEncoder(object):
+class SA(object):
     """Stacked denoising auto-encoder class (SdA)
     """
 
@@ -200,20 +200,25 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
-def predict_sa(images, trained_SA_path = '../data/fine_tune_paramsXnew.pickle'):
+def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel'):
 
     with open(trained_SA_path) as f:
-         SA = pickle.load(f)
+         SA_inst = pickle.load(f)
 
     dim = images.shape
     images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
 
-    predict_model = theano.function(
-            inputs = [SA.X],
-            outputs= SA.logLayer.y_pred)
+    mask_predictions = []
 
-    preds = predict_model(images)
-    mask_predictions= np.reshape(preds, (dim[0], dim[1], dim[2]))
+    predict_model = theano.function(
+            inputs = [SA_inst.X],
+            outputs= SA_inst.logLayer.y_pred)
+
+    for i in range(0, dim[0]):
+        pred = predict_model(images)
+        pred = np.reshape(pred, (dim[0], dim[1], dim[2]))
+        mask_predictions.append(pred)
+
     masks = np.array(mask_predictions)
 
     return masks
@@ -287,7 +292,7 @@ if __name__ == "__main__":
     batchdim = train.shape[0]/numbatches
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, model_class=StackedAutoEncoder,
+                               n_epochs=1, model_class=SA,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,

@@ -15,9 +15,10 @@ sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScience
 import LeNet
 from LeNet import predict as CNNpred
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
-import stackedAutoencoder
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
+from stackedAutoencoder import SA
+
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 
@@ -150,7 +151,7 @@ class Patient(object):
                               for s in range(0, len(self.slices))])
 
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
-                                               '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
                                         for s in range(0, len(self.slices))])
 
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])

@@ -10,7 +10,7 @@ import copy
 import pdb  # debugger
 import time
 
-def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 500):
+def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100):
     """
     evolve_contour performs an active contour algorithm on a level set curve,
     specifically on the zero level of a signed distance function. The zero-level
@@ -108,7 +108,7 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
         # 6. stop if phi has converged or maximum number of iterations has been reached
         if (np.linalg.norm(phi - old_phi, 'fro') < eta) | (cIter == n_max):
             convergence = True
-            print("converged")
+            #print("converged")
             # Draw final level set function
             contour = copy.deepcopy(phi)
             contour[contour > 0] = 0
@@ -126,10 +126,10 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
             intermediate_contour[intermediate_contour == 0] = 1  # ...and the outer part +1
             phi = skfmm.distance(intermediate_contour)  # reinitialize phi as signed distance function
             cIter += 1
-            print(cIter)
+            #print(cIter)
         else:
             cIter += 1
-            print("cIter", cIter)
+            #print("cIter", cIter)
             # draw contour: update the pixels and then draw the figure
             # pdb.set_trace()
             if cIter % n_max == 0:
