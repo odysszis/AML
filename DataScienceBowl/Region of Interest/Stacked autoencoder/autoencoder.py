@@ -66,7 +66,7 @@ class AutoEncoder(object):
         # if no weights for the mapping from input layer to hidden layer were passed
         if not Whid:
             # Whid is initialized with initial_W which is uniformly sampled
-            initial_W = np.asarray(
+            initial_Whid = np.asarray(
                 numpy_rng.uniform(  # uniform initialization of Whid
                     low = -4 * np.sqrt(6. / (n_hidden + n_visible)),
                     high = 4 * np.sqrt(6. / (n_hidden + n_visible)),
@@ -74,12 +74,12 @@ class AutoEncoder(object):
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
             )
-            Whid = theano.shared(value=initial_W, name='W', borrow=True)
+            Whid = theano.shared(value=initial_Whid, name='Whid', borrow=True)
 
         # if no weights for the mapping from hidden layer to output layer were passed
         if not Wvis:
             # Wvis is initialized with initial_W which is uniformly sampled
-            initial_W = np.asarray(
+            initial_Wvis = np.asarray(
                 numpy_rng.uniform(  # uniform initialization of Whid
                     low = -4 * np.sqrt(6. / (n_hidden + n_visible)),
                     high = 4 * np.sqrt(6. / (n_hidden + n_visible)),
@@ -87,7 +87,7 @@ class AutoEncoder(object):
                 ),
                 dtype = theano.config.floatX # theano.config.floatX enables GPU
             )
-            Wvis = theano.shared(value=initial_W, name='W', borrow=True)
+            Wvis = theano.shared(value=initial_Wvis, name='Wvis', borrow=True)
 
         # if no bias for mapping from input to hidden layer is passed
         if not bhid:
@@ -160,7 +160,6 @@ class AutoEncoder(object):
 
         # Compute the cost
         l2_squared = (self.Wvis ** 2).sum() + (self.Whid ** 2).sum()
-        rho_hat = T.sum(h, axis=0)/(T.shape(h)[0])
         KL = T.abs_(rho - T.mean(h))               # True KL?? How to deal with distribution...T.log(T.true_div(rho,rho_hat))
         cost = 0.5*T.mean((y - self.X) ** 2) +0.5*lam*l2_squared + beta*KL
 
@@ -170,7 +169,7 @@ class AutoEncoder(object):
         updates = [(param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)]
 
-        return (cost, updates)
+        return cost, updates
 
 
 

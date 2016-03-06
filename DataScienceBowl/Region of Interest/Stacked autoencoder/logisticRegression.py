@@ -31,16 +31,18 @@ class LogisticRegression(object):
                       which the labels lie
 
         """
-
+        rng = np.random.RandomState(123)
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
-        self.W = theano.shared(
-            value=np.zeros(
-                (n_in, n_out),
-                dtype=theano.config.floatX
-            ),
-            name='W',
-            borrow=True
-        )
+        initial_W = np.asarray(
+                rng.uniform(  # uniform initialization of Whid
+                    low = -4 * np.sqrt(6. / (n_in + n_out)),
+                    high = 4 * np.sqrt(6. / (n_in + n_out)),
+                    size = (n_in, n_out) # n_hidden x n_visible matrix
+                ),
+                dtype = theano.config.floatX # theano.config.floatX enables GPU
+            )
+        self.W = theano.shared(value=initial_W, name='W', borrow=True)
+
         # initialize the biases b as a vector of n_out 0s
         self.b = theano.shared(
             value=np.zeros(
@@ -92,7 +94,7 @@ class LogisticRegression(object):
         updates = [(param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)]
 
-        return (cost, updates)
+        return cost, updates
 
 
 def train_logreg(train_data, train_masks, numbatches,

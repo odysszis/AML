@@ -111,7 +111,7 @@ class SA(object):
         updates = [(param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)]
 
-        return (cost, updates)
+        return cost, updates
 
 
 
@@ -202,6 +202,8 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
 
 def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel'):
 
+
+
     with open(trained_SA_path) as f:
          SA_inst = pickle.load(f)
 
@@ -215,11 +217,20 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
             outputs= SA_inst.logLayer.y_pred)
 
     for i in range(0, dim[0]):
-        pred = predict_model(images)
-        pred = np.reshape(pred, (dim[0], dim[1], dim[2]))
+        current_image = np.reshape(images[i,:], ((dim[1]*dim[2]), 1))
+        pred = predict_model(np.transpose(current_image))
         mask_predictions.append(pred)
 
+    mask_predictions = np.reshape(mask_predictions, (dim[0], dim[1], dim[2]))
+    images = np.reshape(images, (dim[0], dim[1], dim[2]))
     masks = np.array(mask_predictions)
+
+    for i in range(0,10):
+        plt.subplot(1,2,1)
+        plt.imshow(masks[i,:,:])
+        plt.subplot(1,2,2)
+        plt.imshow(images[i,:,:])
+        plt.show()
 
     return masks
 
@@ -280,6 +291,7 @@ if __name__ == "__main__":
 
     mask_roi =crop_ROI(images=mask, roi=roi, roi_dim=(100,100), newsize=(64, 64))
 
+
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
@@ -288,15 +300,19 @@ if __name__ == "__main__":
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
     train_roi= np.array(train_roi, dtype='float64')
 
-    numbatches = 2
+    numbatches = 1
     batchdim = train.shape[0]/numbatches
 
+        #Just test the output
+
+
+
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, model_class=SA,
+                               n_epochs=1500, model_class=SA,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, pretrainedSA=pretrainedSA,
+                               n_epochs=3000, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
@@ -316,20 +332,4 @@ if __name__ == "__main__":
 
 
 
-    #Just test the output
-
-    for i in range(0, 10):
-        plt.subplot(1,6,1)
-        plt.imshow(train[i,:,:])
-        plt.subplot(1,6,2)
-        plt.imshow(mask[i,:,:])
-        plt.subplot(1,6,3)
-        plt.imshow(misc.imresize(roi[i,:,:], (64,64)))
-        plt.subplot(1,6,4)
-        plt.imshow(mask_roi[i,:,:])
-        plt.subplot(1,6,5)
-        plt.imshow(train_roi[i,:,:])
-        plt.subplot(1,6,6)
-        plt.imshow(mask_predictions[i,:,:])
-        plt.show()
 
