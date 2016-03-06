@@ -5,3 +5,6 @@
 *.pickle
 .python-version
 *.log
+*.txt
+*.pyc
+node_modules
