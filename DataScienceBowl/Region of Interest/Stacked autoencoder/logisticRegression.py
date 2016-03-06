@@ -34,24 +34,25 @@ class LogisticRegression(object):
         rng = np.random.RandomState(123)
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         initial_W = np.asarray(
-                rng.uniform(  # uniform initialization of Whid
+                rng.uniform(  # uniform initialization of W
                     low = -4 * np.sqrt(6. / (n_in + n_out)),
                     high = 4 * np.sqrt(6. / (n_in + n_out)),
                     size = (n_in, n_out) # n_hidden x n_visible matrix
                 ),
-                dtype = theano.config.floatX # theano.config.floatX enables GPU
-            )
+                dtype = theano.config.floatX)
+
         self.W = theano.shared(value=initial_W, name='W', borrow=True)
 
         # initialize the biases b as a vector of n_out 0s
-        self.b = theano.shared(
-            value=np.zeros(
-                (n_out,),
-                dtype=theano.config.floatX
-            ),
-            name='b',
-            borrow=True
-        )
+
+        initial_b = np.asarray(
+                rng.uniform(  # uniform initialization of b
+                    low = -4 * np.sqrt(6. / (n_in + n_out)),
+                    high = 4 * np.sqrt(6. / (n_in + n_out)),
+                    size = (n_out,)
+                ),
+                dtype = theano.config.floatX)
+        self.b = theano.shared(value=initial_b, name='b', borrow=True)
 
         # symbolic variables for inputs
         if masks is None:

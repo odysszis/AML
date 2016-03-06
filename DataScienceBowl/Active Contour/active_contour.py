@@ -10,7 +10,7 @@ import copy
 import pdb  # debugger
 import time
 
-def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100):
+def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1000):
     """
     evolve_contour performs an active contour algorithm on a level set curve,
     specifically on the zero level of a signed distance function. The zero-level
@@ -113,8 +113,8 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
             contour = copy.deepcopy(phi)
             contour[contour > 0] = 0
             contour[contour < 0] = 1
-            #plt.imshow(contour)
-            #plt.show()
+            plt.imshow(contour)
+            plt.show()
         elif cIter % n_reinit == 0:  # Check if we have to reinitialize phi
             # reinitialize by figuring out where phi is neg. and where pos -> define intermediate contour as points
             # where phi is non-positive and reinitialize as signed distance mapping
@@ -137,7 +137,7 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
                 contour[contour > 0] = 0
                 contour[contour < 0] = 1
                 contour = contour + roi
-                #plt.imshow(contour)
+               # plt.imshow(contour)
                 #plt.show()
 
     return phi

@@ -23,7 +23,7 @@ def inspect_outputs(i, node, fn):
     print(" output(s) value(s):", [output[0] for output in fn.outputs])
 
 
-def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel'):
+def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_X10modelCPU'):
 
 
 
@@ -37,10 +37,10 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
 
     predict_model = theano.function(
             inputs = [SA_inst.X],
-            outputs= SA_inst.logLayer.p_y_given_x,
-            mode=theano.compile.MonitorMode(
-                        pre_func=inspect_inputs,
-                        post_func=inspect_outputs))
+            outputs= SA_inst.logLayer.p_y_given_x)
+            #mode=theano.compile.MonitorMode(
+                        #pre_func=inspect_inputs,
+                        #post_func=inspect_outputs))
 
     for i in range(0, dim[0]):
         current_image = np.reshape(images[i,:], ((dim[1]*dim[2]), 1))
@@ -59,7 +59,7 @@ train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBow
 mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
 train_roi =crop_ROI(images=train, roi=roi, roi_dim=(100,100), newsize=(64, 64))
 mask_roi =crop_ROI(images= mask, roi=roi, roi_dim=(100,100), newsize=(64, 64))
-mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUmodel')
 
 
 for i in range(0,100):
