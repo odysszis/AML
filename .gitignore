@@ -8,3 +8,5 @@
 *.txt
 *.pyc
 node_modules
+product_descriptions.csv
+attributes.csv
