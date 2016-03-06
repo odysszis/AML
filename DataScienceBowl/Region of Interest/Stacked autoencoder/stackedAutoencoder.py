@@ -200,7 +200,7 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
-def predict_sa(images, trained_SA_path = '../data/fine_tune_paramsXnew.pickle'):
+def predict_sa(images, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle'):
 
     with open(trained_SA_path) as f:
          SA = pickle.load(f)
@@ -255,16 +255,16 @@ if __name__ == "__main__":
 
 
     # load required inputs and call training method (random data used until CNN is working)
-    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
-    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
-    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
+    roi = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
+    train = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainImage256')
+    mask = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainMask256')
 
     dimimages = roi.shape
     numimages = dimimages[0]
 
 
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
+    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/CNN_outputXnew.pickle', 'rb') as f:
         roi_pred = pickle.load(f)
         roi_pred = np.asarray(roi_pred)
         thres = 0.5
@@ -278,10 +278,10 @@ if __name__ == "__main__":
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
-    mask_roi = np.array(mask_roi, dtype='float64')
+    mask_roi = np.array(mask_roi, dtype='float32')
 
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
-    train_roi= np.array(train_roi, dtype='float64')
+    train_roi= np.array(train_roi, dtype='float32')
 
     numbatches = 2
     batchdim = train.shape[0]/numbatches
@@ -295,18 +295,18 @@ if __name__ == "__main__":
                                             learning_rate=10, lam=0.0001)
 
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpremodel', 'wb') as f:
+    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpremodel', 'wb') as f:
         pickle.dump(pretrainedSA, f)
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
+    with open('//home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
     train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
     mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))
-    mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+    mask_predictions = predict_sa(train_roi, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel')
 
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
         pickle.dump(mask_predictions, f)
 
 

@@ -11,14 +11,14 @@ import re
 import dicom
 from LoadData import crop_resize
 import sys
-sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/convolution/')
+sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/convolution/')
 import LeNet
 from LeNet import predict as CNNpred
-sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
-sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
+sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 
 
@@ -142,15 +142,16 @@ class Patient(object):
 
         #images are slice * time * height * width
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
+                                          fine_tuned_params_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
                                   for s in range(0, len(self.slices))])
+
 
         self.imagesROIs = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:],
                                              roi_dim=(100,100), newsize=(64, 64))
                               for s in range(0, len(self.slices))])
 
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
-                                               '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+                                               '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel')
                                         for s in range(0, len(self.slices))])
 
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
