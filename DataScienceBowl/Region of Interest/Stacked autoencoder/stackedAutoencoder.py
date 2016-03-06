@@ -106,7 +106,7 @@ class SA(object):
         for i in xrange(self.n_layers):
             l2_squared += (self.sigmoid_layers[i].W** 2).sum()
         l2_squared = l2_squared + (self.logLayer.W** 2).sum()
-        cost = 0.5*T.mean((self.Y - self.logLayer.p_y_given_x) ** 2) + (0.5*lam*l2_squared)
+        cost = 0.5*T.mean((self.Y - self.logLayer.p_y_given_x) ** 2)+ (0.5*lam*l2_squared)
 
         # Compute updates
         gparams = T.grad(cost, self.params)
@@ -203,7 +203,7 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
 
 
 
-def predict_sa(images, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel'):
+def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel'):
 
     with open(trained_SA_path) as f:
          SA_inst = pickle.load(f)
@@ -272,16 +272,16 @@ if __name__ == "__main__":
 
 
     # load required inputs and call training method (random data used until CNN is working)
-    roi = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
-    train = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainImage256')
-    mask = np.load('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SBXtrainMask256')
+    roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
+    train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
+    mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
 
     dimimages = roi.shape
     numimages = dimimages[0]
 
 
 
-    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/CNN_outputXnew.pickle', 'rb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'rb') as f:
         roi_pred = pickle.load(f)
         roi_pred = np.asarray(roi_pred)
         thres = 0.5
@@ -296,10 +296,10 @@ if __name__ == "__main__":
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
-    mask_roi = np.array(mask_roi, dtype='float32')
+    mask_roi = np.array(mask_roi, dtype='float64')
 
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
-    train_roi= np.array(train_roi, dtype='float32')
+    train_roi= np.array(train_roi, dtype='float64')
 
     numbatches = 1
     batchdim = train.shape[0]/numbatches
@@ -309,26 +309,26 @@ if __name__ == "__main__":
 
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=10000, model_class=SA,
+                               n_epochs=150, model_class=SA,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=10000, pretrainedSA=pretrainedSA,
+                               n_epochs=150, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
-    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpremodel', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUpremodel', 'wb') as f:
         pickle.dump(pretrainedSA, f)
 
-    with open('//home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_X10model', 'wb') as g:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUmodel', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
     train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
     mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))
-    mask_predictions = predict_sa(train_roi, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_X10model')
+    mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUmodel')
 
 
-    with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/datadata/SA_RLUpremodel', 'wb') as f:
         pickle.dump(mask_predictions, f)
 
 

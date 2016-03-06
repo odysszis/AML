@@ -1,6 +1,7 @@
 
 import theano.tensor as T
 import numpy as np
+from numpy import genfromtxt
 from theano.tensor.shared_randomstreams import RandomStreams
 import theano
 from scipy import misc
@@ -10,24 +11,17 @@ import os
 import re
 import dicom
 from LoadData import crop_resize
+from sklearn import linear_model
 import sys
-sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/convolution/')
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/convolution/')
 import LeNet
 from LeNet import predict as CNNpred
-<<<<<<< HEAD
-sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
-import stackedAutoencoder
-from stackedAutoencoder import predict_sa as SApred
-from stackedAutoencoder import crop_ROI
-sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Active Contour/')
-=======
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
 from stackedAutoencoder import SA
 
 sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
->>>>>>> c2eb7c26a34ade55e9c42d470e92e6e0ec65ca9b
 import active_contour as AC
 
 
@@ -151,7 +145,7 @@ class Patient(object):
 
         #images are slice * time * height * width
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
+                                          fine_tuned_params_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
                                   for s in range(0, len(self.slices))])
 
 
@@ -160,14 +154,10 @@ class Patient(object):
                               for s in range(0, len(self.slices))])
 
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
-<<<<<<< HEAD
-                                               '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel')
-=======
-                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
->>>>>>> c2eb7c26a34ade55e9c42d470e92e6e0ec65ca9b
+                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_XPHmodel')
                                         for s in range(0, len(self.slices))])
 
-        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
+        self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t],alpha3=0)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.slices))])
 
 
@@ -208,6 +198,26 @@ def calc_volarea(patient):
     patient.esv = esv
     patient.ef= ef
 
+def regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv'):
+
+    results = genfromtxt(resultspath, delimiter=',')
+    edv_pred = results[3]
+    esv_pred = results[4]
+    edv_label = results[1]
+    esv_label = results[2]
+    patient = results[1]
+
+    edv_regr = linear_model.LinearRegression()
+    edv_regr.fit(edv_pred, edv_label)
+    edv_regvol = edv_regr.predict(edv_pred)
+
+    esv_regr = linear_model.LinearRegression()
+    esv_regr.fit(esv_pred, esv_label)
+    esv_regvol = esv_regr.predict(esv_pred)
+
+
+    regressed_results_csv = open('regressed_results_csv.csv', 'w')
+    regressed_results_csv.write('%s,%f,%f,%f,%f\n' % (patient, edv_label, esv_label, edv_regvol, esv_regvol))
 
 
 if __name__ == "__main__":
@@ -241,3 +251,5 @@ if __name__ == "__main__":
         except Exception as e:
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
         results_csv.close()
+
+    regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv') #
