@@ -14,11 +14,20 @@ import sys
 sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/convolution/')
 import LeNet
 from LeNet import predict as CNNpred
+<<<<<<< HEAD
 sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
 sys.path.insert(0, '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/Active Contour/')
+=======
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+from stackedAutoencoder import predict_sa as SApred
+from stackedAutoencoder import crop_ROI
+from stackedAutoencoder import SA
+
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
+>>>>>>> c2eb7c26a34ade55e9c42d470e92e6e0ec65ca9b
 import active_contour as AC
 
 
@@ -151,7 +160,11 @@ class Patient(object):
                               for s in range(0, len(self.slices))])
 
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
+<<<<<<< HEAD
                                                '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel')
+=======
+                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Xmodel')
+>>>>>>> c2eb7c26a34ade55e9c42d470e92e6e0ec65ca9b
                                         for s in range(0, len(self.slices))])
 
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
@@ -180,7 +193,7 @@ def calc_volume(areas, mult, dist):
 
 
 def calc_volarea(patient):
-    # compute the areas of all images. areas: [16 x 30] dictionary (I think)
+    # compute the areas of all images. areas:
 
     areas = calc_areas(patient.predACContours)
     volumes = [calc_volume(area, patient.area_multiplier, patient.dist) for area in areas]

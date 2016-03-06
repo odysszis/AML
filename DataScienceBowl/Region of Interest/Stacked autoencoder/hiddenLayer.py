@@ -60,6 +60,7 @@ class HiddenLayer(object):
         self.output = activation(lin_output)
 
 
+
 def iterate_epochs(n_epochs, numbatches, train_fn, model_class):
     '''_
         runs through training epochs for a given theano function

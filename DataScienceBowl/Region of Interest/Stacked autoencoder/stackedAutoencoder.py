@@ -7,11 +7,11 @@ import hiddenLayer as HL
 import autoencoder as AC
 import logisticRegression as LR
 from scipy import misc
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pickle
 import os
 
-class StackedAutoEncoder(object):
+class SA(object):
     """Stacked denoising auto-encoder class (SdA)
     """
 
@@ -26,6 +26,7 @@ class StackedAutoEncoder(object):
         n_outs=4096):
 
         self.sigmoid_layers = []
+        self.HL_output = []
         self.AutoEncoder_layers = []
         self.params = []
         self.n_layers = len(hidden_layers_sizes)
@@ -66,6 +67,7 @@ class StackedAutoEncoder(object):
             # add the layer to our list of layers
             self.sigmoid_layers.append(sigmoid_layer)
             self.params.extend(sigmoid_layer.params)
+
 
             # Construct an autoencoder that shared weights with this layer and append to list
             AutoEncoder_layer = AC.AutoEncoder(numpy_rng=numpy_rng,
@@ -111,7 +113,7 @@ class StackedAutoEncoder(object):
         updates = [(param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)]
 
-        return (cost, updates)
+        return cost, updates
 
 
 
@@ -200,21 +202,36 @@ def finetune_sa(train_data, train_masks, numbatches, n_epochs, pretrainedSA, **a
     return finetunedSA
 
 
-def predict_sa(images, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle'):
+
+def predict_sa(images, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel'):
 
     with open(trained_SA_path) as f:
-         SA = pickle.load(f)
+         SA_inst = pickle.load(f)
 
     dim = images.shape
     images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
 
-    predict_model = theano.function(
-            inputs = [SA.X],
-            outputs= SA.logLayer.y_pred)
+    mask_predictions = []
 
-    preds = predict_model(images)
-    mask_predictions= np.reshape(preds, (dim[0], dim[1], dim[2]))
+    predict_model = theano.function(
+            inputs = [SA_inst.X],
+            outputs= SA_inst.logLayer.y_pred)
+
+    for i in range(0, dim[0]):
+        current_image = np.reshape(images[i,:], ((dim[1]*dim[2]), 1))
+        pred = predict_model(np.transpose(current_image))
+        mask_predictions.append(pred)
+
+    mask_predictions = np.reshape(mask_predictions, (dim[0], dim[1], dim[2]))
+    images = np.reshape(images, (dim[0], dim[1], dim[2]))
     masks = np.array(mask_predictions)
+
+#    for i in range(0,10):
+#        plt.subplot(1,2,1)
+#        plt.imshow(masks[i,:,:])
+#        plt.subplot(1,2,2)
+#        plt.imshow(images[i,:,:])
+#        plt.show()
 
     return masks
 
@@ -275,6 +292,7 @@ if __name__ == "__main__":
 
     mask_roi =crop_ROI(images=mask, roi=roi, roi_dim=(100,100), newsize=(64, 64))
 
+
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
@@ -283,27 +301,31 @@ if __name__ == "__main__":
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
     train_roi= np.array(train_roi, dtype='float32')
 
-    numbatches = 2
+    numbatches = 1
     batchdim = train.shape[0]/numbatches
 
+        #Just test the output
+
+
+
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, model_class=StackedAutoEncoder,
+                               n_epochs=10000, model_class=SA,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1, pretrainedSA=pretrainedSA,
+                               n_epochs=10000, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
     with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpremodel', 'wb') as f:
         pickle.dump(pretrainedSA, f)
 
-    with open('//home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel', 'wb') as g:
+    with open('//home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_X10model', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
     train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
     mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))
-    mask_predictions = predict_sa(train_roi, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xmodel')
+    mask_predictions = predict_sa(train_roi, trained_SA_path = '/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_X10model')
 
 
     with open('/home/odyss/Desktop/mock_dsb/AML/DataScienceBowl/data/SA_Xpreds', 'wb') as f:
@@ -311,20 +333,4 @@ if __name__ == "__main__":
 
 
 
-    #Just test the output
-
-    for i in range(0, 10):
-        plt.subplot(1,6,1)
-        plt.imshow(train[i,:,:])
-        plt.subplot(1,6,2)
-        plt.imshow(mask[i,:,:])
-        plt.subplot(1,6,3)
-        plt.imshow(misc.imresize(roi[i,:,:], (64,64)))
-        plt.subplot(1,6,4)
-        plt.imshow(mask_roi[i,:,:])
-        plt.subplot(1,6,5)
-        plt.imshow(train_roi[i,:,:])
-        plt.subplot(1,6,6)
-        plt.imshow(mask_predictions[i,:,:])
-        plt.show()
 
