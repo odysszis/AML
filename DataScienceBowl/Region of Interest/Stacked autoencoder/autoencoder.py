@@ -161,7 +161,7 @@ class AutoEncoder(object):
         # Compute the cost
         l2_squared = (self.Wvis ** 2).sum() + (self.Whid ** 2).sum()
         KL = T.abs_(rho - T.mean(h))               # True KL?? How to deal with distribution...T.log(T.true_div(rho,rho_hat))
-        cost = 0.5*T.mean((y - self.X) ** 2) +0.5*lam*l2_squared + beta*KL
+        cost = 0.5*T.mean((y - self.X) ** 2) +0.5*lam*l2_squared # + beta*KL
 
 
         # Compute updates

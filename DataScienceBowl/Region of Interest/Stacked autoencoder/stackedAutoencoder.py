@@ -26,6 +26,7 @@ class SA(object):
         n_outs=4096):
 
         self.sigmoid_layers = []
+        self.HL_output = []
         self.AutoEncoder_layers = []
         self.params = []
         self.n_layers = len(hidden_layers_sizes)
@@ -66,6 +67,7 @@ class SA(object):
             # add the layer to our list of layers
             self.sigmoid_layers.append(sigmoid_layer)
             self.params.extend(sigmoid_layer.params)
+
 
             # Construct an autoencoder that shared weights with this layer and append to list
             AutoEncoder_layer = AC.AutoEncoder(numpy_rng=numpy_rng,
@@ -308,11 +310,11 @@ if __name__ == "__main__":
 
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1500, model_class=SA,
+                               n_epochs=50, model_class=SA,
                                             learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=3000, pretrainedSA=pretrainedSA,
+                               n_epochs=50, pretrainedSA=pretrainedSA,
                                             learning_rate=10, lam=0.0001)
 
 
