@@ -63,10 +63,17 @@ mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Docume
 
 
 for i in range(0,100):
-    plt.subplot(1,3,1)
-    plt.imshow(mask_predictions[i,:,:])
-    plt.subplot(1,3,2)
-    plt.imshow(train_roi[i,:,:])
-    plt.subplot(1,3,3)
-    plt.imshow(mask_roi[i,:,:])
+    f, axarr = plt.subplots(3, 2)
+    axarr[0, 1].imshow(train[i,:,:])
+    axarr[0, 1].set_title('Original Image')
+    axarr[0, 0].imshow(mask[i,:,:])
+    axarr[0, 0].set_title('Original Contour')
+    axarr[1, 0].imshow(roi[i,:,:])
+    axarr[1, 0].set_title('Original binary ROI')
+    axarr[1, 1].imshow(train_roi[i,:,:])
+    axarr[1, 1].set_title('Original Image ROI')
+    axarr[2, 0].imshow(mask_roi[i,:,:])
+    axarr[2, 0].set_title('Original Contour ROI')
+    axarr[2, 1].imshow(mask_predictions[i,:,:])
+    axarr[2, 1].set_title('Predicted Contour')
     plt.show()

@@ -22,7 +22,7 @@ class SA(object):
         numpy_rng,
         theano_rng=None,
         n_ins=4096,
-        hidden_layers_sizes=[100, 100],
+        hidden_layers_sizes=[200, 100,100, 200],
         n_outs=4096):
 
         self.sigmoid_layers = []
@@ -143,7 +143,7 @@ def pretrain_sa(train_data, train_masks, numbatches, n_epochs, model_class, **ar
         numpy_rng=rng,
         theano_rng=theano_rng,
         n_ins=4096,
-        hidden_layers_sizes=[100, 100],
+        hidden_layers_sizes=[200, 100,100, 200],
         n_outs=4096)
 
     for autoE in model_object.AutoEncoder_layers:
@@ -250,7 +250,7 @@ def crop_ROI(images, roi, roi_dim, newsize):
 
         # get roi co-ords for cropping; using centre
         rows, cols = np.where(region == 1)
-        cen_x, cen_y = (np.median(cols), np.median(rows))
+        cen_x, cen_y = (np.round(np.median(cols)), np.round(np.median(rows)))
 
         # execute  cropping on the image to produce ROI
         image = image[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
@@ -259,7 +259,7 @@ def crop_ROI(images, roi, roi_dim, newsize):
         image = misc.imresize(image, newsize)
 
         if np.max(image) >1:
-            image = np.true_divide(image, 255)
+           image = np.true_divide(image, 255)
 
         image_roi.append(image)
 
@@ -309,12 +309,12 @@ if __name__ == "__main__":
 
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=150, model_class=SA,
-                                            learning_rate=10, lam=0.0001, beta=3, rho = 0.1)
+                               n_epochs=500, model_class=SA,
+                                            learning_rate=0.01, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=150, pretrainedSA=pretrainedSA,
-                                            learning_rate=10, lam=0.0001)
+                               n_epochs=1000, pretrainedSA=pretrainedSA,
+                                            learning_rate=0.01, lam=0.0001)
 
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUpremodel', 'wb') as f:
