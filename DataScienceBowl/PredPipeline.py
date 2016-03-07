@@ -222,7 +222,6 @@ def regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/
 
 if __name__ == "__main__":
 
-
     # contains 'train', 'validate', etc
     data_path = '../DataScienceBowl/data'
 
@@ -252,4 +251,4 @@ if __name__ == "__main__":
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
         results_csv.close()
 
-    regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv') #
+    regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv') # regress final volumes

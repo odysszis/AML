@@ -9,8 +9,10 @@ from matplotlib import pyplot as plt
 import copy
 import pdb  # debugger
 import time
+import itertools
+import sklearn as sk
 
-def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1000):
+def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100):
     """
     evolve_contour performs an active contour algorithm on a level set curve,
     specifically on the zero level of a signed distance function. The zero-level
@@ -113,8 +115,8 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
             contour = copy.deepcopy(phi)
             contour[contour > 0] = 0
             contour[contour < 0] = 1
-            plt.imshow(contour)
-            plt.show()
+            #plt.imshow(contour)
+            #plt.show()
         elif cIter % n_reinit == 0:  # Check if we have to reinitialize phi
             # reinitialize by figuring out where phi is neg. and where pos -> define intermediate contour as points
             # where phi is non-positive and reinitialize as signed distance mapping
@@ -221,4 +223,39 @@ def heavyside(phi):
         H[mask] = 1/2 * (1 + H[mask]/Epsilon + 1/np.pi * np.sin(np.pi * H[mask]/Epsilon))
 
     return H
+
+
+
+def ac_val(contour_preds, roi_images, contour_labels, trial_params):
+
+    """
+    Trial parameter ranges: alpha1{1, 1.5, 2}, alpha 2{1.5,2,2.5},  alpha 3 = {0, ..., 0.01} steps 0.001
+
+    """
+
+    dim = roi_images.shape
+    combs_params = np.array(list(itertools.product(*trial_params))) #gets all combinations of params for each Cross val step
+    pred_ACs=[]
+    error = []
+
+    contour_labels_col = np.reshape(contour_labels, (dim[0],(dim[1]* dim[2])))
+
+    for p in range(0, len(combs_params)):
+
+        for c in range(0, dim[0]):
+
+            current_pred = evolve_contour(lv = contour_preds[p], roi = roi_images[p], deltaT=0.1,
+                                 alpha1=combs_params[p,0], alpha2=combs_params[p,2], alpha3=combs_params[p,3],
+                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100)
+
+            pred_ACs.append(current_pred)
+
+        # reshape the preds for calculating prediction error
+        pred_ACs_col = np.reshape( pred_ACs, (dim[0],(dim[1]* dim[2])))
+        error.append(sk.metrics.f1_score(contour_labels_col, pred_ACs_col)) # F1 = 2 * (precision * recall) / (precision + recall), # check if average or not
+    min_cost = np.where(error == np.min(error)) # finds the best params
+    best_params = combs_params[min_cost] # singleton array of best parameters
+
+    return best_params
+
 
