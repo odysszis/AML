@@ -346,7 +346,7 @@ def regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv'):
     esv_pred = np.reshape(results[:,4],(dim[0],1))
     edv_label = np.reshape(results[:,1],(dim[0],1))
     esv_label = np.reshape(results[:,2],(dim[0],1))
-    patient = np.reshape(results[:,1],(dim[0],1))
+    patient = np.reshape(results[:,0],(dim[0],1))
 
     edv_regr = linear_model.LinearRegression() # create regression object
     edv_regr.fit(edv_pred, edv_label) # fit edv model with data
