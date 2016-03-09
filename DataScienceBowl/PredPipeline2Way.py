@@ -18,9 +18,11 @@ sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Region of Interest/Stacked aut
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
 from stackedAutoencoder import SA
+from sklearn import linear_model
 
 sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
+from numpy import genfromtxt
 
 
 
@@ -275,6 +277,8 @@ class Patient(object):
         self.end_diastole_area = areas_big[max_area_big_idx] + areas_small[max_area_small_idx]
         return [self.end_systole_area, self.end_diastole_area]
 
+
+# the single pipeline area and volume cals are depreciated due to added complexity of two way
 """
 def calc_areas(images):
     # images are circular binary masks
@@ -323,7 +327,57 @@ def calc_volarea(patient):
 
     patient.edArea = big_edv
     patient.esArea = areas_small
+
  """
+
+
+def regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv'):
+
+    """"
+    Method for regressing final kaggle predictions to the provided patient training volumes
+    and then updating the predictions based on the learned linear_model the stored learned model is extracted
+    so it can be used subsequently at test time when the volumes are unkown
+    """
+    results = genfromtxt(resultspath, delimiter=',') # get volume predictions and labels from file
+    dim = results.shape
+
+    # get X and Y arguments for subsequent regression and resize in order for them to work with fit function
+    edv_pred = np.reshape(results[:,3],(dim[0],1))
+    esv_pred = np.reshape(results[:,4],(dim[0],1))
+    edv_label = np.reshape(results[:,1],(dim[0],1))
+    esv_label = np.reshape(results[:,2],(dim[0],1))
+    patient = np.reshape(results[:,1],(dim[0],1))
+
+    edv_regr = linear_model.LinearRegression() # create regression object
+    edv_regr.fit(edv_pred, edv_label) # fit edv model with data
+
+    edv_regvol = edv_regr.predict(edv_pred) # regress edv volumes
+
+    # repeat for esv
+    esv_regr = linear_model.LinearRegression()
+    esv_regr.fit(esv_pred, esv_label)
+    esv_regvol = esv_regr.predict(esv_pred)
+
+    # concatenate results
+    regressed_results = np.concatenate((patient,esv_label, edv_label, edv_regvol, esv_regvol), axis=1)
+
+    # store results in csv file ready for processing
+    np.savetxt(
+        'regressed_results', # file name
+        regressed_results, # array to save
+        fmt='%.2f', # format
+        delimiter=',', # column delimiter
+        newline='\n')  # new line character
+
+    # pickle dump regression models built using the training data, so they can be loaded and used at test time
+    with open('.../AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
+        pickle.dump(esv_regvol , f)
+
+    with open('.../AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
+        pickle.dump(edv_regvol , fi)
+
+
+
 
 
 if __name__ == "__main__":
@@ -359,3 +413,5 @@ if __name__ == "__main__":
         except Exception as e:
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
         results_csv.close()
+
+    regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv') # regress final volumes

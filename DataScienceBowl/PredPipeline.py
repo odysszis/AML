@@ -200,24 +200,50 @@ def calc_volarea(patient):
 
 def regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv'):
 
-    results = genfromtxt(resultspath, delimiter=',')
-    edv_pred = results[3]
-    esv_pred = results[4]
-    edv_label = results[1]
-    esv_label = results[2]
-    patient = results[1]
+    """"
+    Method for regressing final kaggle predictions to the provided patient training volumes
+    and then updating the predictions based on the learned linear_model the stored learned model is extracted
+    so it can be used subsequently at test time when the volumes are unkown
+    """
+    results = genfromtxt(resultspath, delimiter=',') # get volume predictions and labels from file
+    dim = results.shape
 
-    edv_regr = linear_model.LinearRegression()
-    edv_regr.fit(edv_pred, edv_label)
-    edv_regvol = edv_regr.predict(edv_pred)
+    # get X and Y arguments for subsequent regression and resize in order for them to work with fit function
+    edv_pred = np.reshape(results[:,3],(dim[0],1))
+    esv_pred = np.reshape(results[:,4],(dim[0],1))
+    edv_label = np.reshape(results[:,1],(dim[0],1))
+    esv_label = np.reshape(results[:,2],(dim[0],1))
+    patient = np.reshape(results[:,1],(dim[0],1))
 
+    edv_regr = linear_model.LinearRegression()# create regression object
+    edv_regr.fit(edv_pred, edv_label) # fit edv model with data
+
+    edv_regvol = edv_regr.predict(edv_pred)# regress edv volumes
+
+    # repeat for esv
     esv_regr = linear_model.LinearRegression()
     esv_regr.fit(esv_pred, esv_label)
     esv_regvol = esv_regr.predict(esv_pred)
 
+    # concatenate results
+    regressed_results = np.concatenate((patient,esv_label, edv_label, edv_regvol, esv_regvol), axis=1)
 
-    regressed_results_csv = open('regressed_results_csv.csv', 'w')
-    regressed_results_csv.write('%s,%f,%f,%f,%f\n' % (patient, edv_label, esv_label, edv_regvol, esv_regvol))
+    # store results in csv file ready for processing
+
+    np.savetxt(
+        'regressed_results', # file name
+        regressed_results, # array to save
+        fmt='%.2f', # format
+        delimiter=',', # column delimiter
+        newline='\n')  # new line character
+
+    # pickle dump regression models built using the training data, so they can be loaded and used at test time
+
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
+        pickle.dump(esv_regvol , f)
+
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
+        pickle.dump(edv_regvol , fi)
 
 
 if __name__ == "__main__":
@@ -249,6 +275,6 @@ if __name__ == "__main__":
             results_csv.write('%s,%f,%f,%f,%f\n' % (patient.name, edv, esv, patient.edv, patient.esv))
         except Exception as e:
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
-        results_csv.close()
+    results_csv.close()
 
     regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/results.csv') # regress final volumes
