@@ -77,7 +77,7 @@ class LogisticRegression(object):
 
         # output
         self.output = T.nnet.sigmoid( T.dot(input, self.W) + self.b )       # batch_size x 1024
-
+        self.thresh = T.round(self.output)
         # parameters of the model
         self.params = [self.W, self.b]                                      # W: 1024 x 8100, b: 1024 x 1
 
