@@ -362,7 +362,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     )
     predict_model = theano.function(
         inputs = [index],
-        outputs=layer3.output,
+        outputs=layer3.thresh,
         givens={
             x: train_set_x[index * batch_size: (index + 1) * batch_size]
         }
