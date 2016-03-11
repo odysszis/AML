@@ -11,6 +11,7 @@ import pdb  # debugger
 import time
 import itertools
 import sklearn as sk
+from sklearn.metrics import f1_score
 
 def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100):
     """
@@ -230,31 +231,45 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
 
     """
     Trial parameter ranges: alpha1{1, 1.5, 2}, alpha 2{1.5,2,2.5},  alpha 3 = {0, ..., 0.01} steps 0.001
+    This method gets all combinations of trail parameter across 3 tuning variables alpha 1-3.
+    It then passes each contour_pred image through the AC for each set of parameter combinations,
+    recording the f1 score in the process.
+
+    The parameters with the best f1_score are selected as the best for use at test time for the AC during prediction.
 
     """
 
-    dim = roi_images.shape
-    combs_params = np.array(list(itertools.product(*trial_params))) #gets all combinations of params for each Cross val step
+    dim = roi_images.shape # get dimension of image data to loop through
+    combs_params = np.array(list(itertools.product(*trial_params))) #g ets all combinations of params for each validation step
+
+    # set placeholders for the prediction image storage and the prediction error storage
     pred_ACs=[]
     error = []
 
+    # collapse the true LV contour for use when computing the f1 score vrs the collapsed predictions
     contour_labels_col = np.reshape(contour_labels, (dim[0],(dim[1]* dim[2])))
 
+    # loop through all the parameter combinations
     for p in range(0, len(combs_params)):
 
+        # loop through each image and get a prediction by evolving the contour
         for c in range(0, dim[0]):
 
-            current_pred = evolve_contour(lv = contour_preds[p], roi = roi_images[p], deltaT=0.1,
-                                 alpha1=combs_params[p,0], alpha2=combs_params[p,2], alpha3=combs_params[p,3],
-                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100)
-
+            current_pred = evolve_contour(lv = contour_preds[c], roi = roi_images[c], deltaT=0.1,
+                                 alpha1=combs_params[p,0], alpha2=combs_params[p,1], alpha3=combs_params[p,2],
+                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1)
+            # collect ACs
             pred_ACs.append(current_pred)
 
-        # reshape the preds for calculating prediction error
+        # collapse the new predictions for use in f1 score calculation
         pred_ACs_col = np.reshape( pred_ACs, (dim[0],(dim[1]* dim[2])))
-        error.append(sk.metrics.f1_score(contour_labels_col, pred_ACs_col)) # F1 = 2 * (precision * recall) / (precision + recall), # check if average or not
-    min_cost = np.where(error == np.min(error)) # finds the best params
-    best_params = combs_params[min_cost] # singleton array of best parameters
+
+        # calcualte error
+        error.append(f1_score(contour_labels_col, pred_ACs_col)) # F1 = 2 * (precision * recall) / (precision + recall), # check if average or not
+
+    min_cost = np.where(error == np.min(error)) # gets index of best parameters based on minimum error
+
+    best_params = combs_params[min_cost] # singleton array of best parameters selected
 
     return best_params
 
