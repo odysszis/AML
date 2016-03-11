@@ -250,11 +250,10 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
 
     # loop through all the parameter combinations
     for p in range(0, len(combs_params)):
-
+        pred_ACs = []
         # loop through each image and get a prediction by evolving the contour
         for c in range(0, dim[0]):
 
-            pred_ACs=[]
             print 'Processing image %d.....,' % c
             current_pred = evolve_contour(lv = contour_preds[c], roi = roi_images[c], deltaT=0.1,
                                  alpha1=combs_params[p,0], alpha2=combs_params[p,1], alpha3=combs_params[p,2],
@@ -265,7 +264,7 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
 
         # collapse the new predictions for use in f1 score calculation
 
-        pred_ACs_col = np.reshape( pred_ACs, (dim[0],(dim[1]* dim[2])))
+        pred_ACs_col = np.reshape(pred_ACs, (dim[0],(dim[1]* dim[2])))
 
         # calcualte error
         error.append(f1_score(contour_labels_col, pred_ACs_col)) # F1 = 2 * (precision * recall) / (precision + recall), # check if average or not
