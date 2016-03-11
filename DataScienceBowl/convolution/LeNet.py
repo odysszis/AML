@@ -308,10 +308,10 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
 
         # load pre-trained parameters
         W_logistic, b_logistic, W_CNN_input, b_CNN_input = params
-        W_logistic = numpy.asarray(W_logistic,dtype='float64')
-        b_logistic = numpy.asarray(b_logistic,dtype='float64')
-        W_CNN_input = numpy.asarray(W_CNN_input,dtype='float64')
-        b_CNN_input= numpy.asarray(b_CNN_input,dtype='float64')
+        W_logistic = numpy.asarray(W_logistic,dtype='float32')
+        b_logistic = numpy.asarray(b_logistic,dtype='float32')
+        W_CNN_input = numpy.asarray(W_CNN_input,dtype='float32')
+        b_CNN_input= numpy.asarray(b_CNN_input,dtype='float32')
 
         W_logistic = theano.shared(W_logistic.astype(fx), borrow=True)
         b_logistic = theano.shared(b_logistic.astype(fx), borrow=True)
@@ -322,7 +322,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
 
     # manipulate data
 
-    train_set_x = numpy.asarray(inputimages, dtype='float64')
+    train_set_x = numpy.asarray(inputimages, dtype='float32')
     dim = train_set_x.shape
     train_set_x = numpy.reshape(train_set_x, (dim[0], (dim[1]*dim[2])))
     train_set_x = theano.shared(train_set_x.astype(fx), borrow=True)                      # convert to 260 x 4096
