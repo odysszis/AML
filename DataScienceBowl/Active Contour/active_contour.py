@@ -257,7 +257,7 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
 
             current_pred = evolve_contour(lv = contour_preds[c], roi = roi_images[c], deltaT=0.1,
                                  alpha1=combs_params[p,0], alpha2=combs_params[p,1], alpha3=combs_params[p,2],
-                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1)
+                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100)
             # collect ACs
             pred_ACs.append(current_pred)
 

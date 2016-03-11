@@ -14,19 +14,21 @@ from stackedAutoencoder import crop_ROI
     It uses the validation function from within the active_contour module
 """
 
+LOCALDATAPATH = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/'
+
 # load required data
 
 # binary region of interest square (output from CNN)
-roi = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainBinaryMask32')
+roi = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32')
 
 # original training image
-train = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainImage256')
+train = np.load(LOCALDATAPATH + 'SBXtrainImage256')
 
 # original training binary contour
-mask = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SBXtrainMask256')
+mask = np.load(LOCALDATAPATH + 'SBXtrainMask256')
 
 # predictions from SA based on the above data
-preds = np.load('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_predictions')
+preds = np.load(LOCALDATAPATH + 'SA_predictions')
 
 # crop original image and contour data to match the region of the predictions
 train_roi =crop_ROI(images=train, roi=roi, roi_dim=(100,100), newsize=(64, 64))
@@ -46,4 +48,4 @@ params = [[1, 1.5,2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.00
 
 best_params = AC.ac_val(preds, train_roi, mask_roi, params)
 
-best_params.dump('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/AC_params')
+best_params.dump(LOCALDATAPATH + 'AC_params')
