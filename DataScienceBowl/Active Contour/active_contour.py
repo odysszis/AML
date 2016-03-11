@@ -114,7 +114,7 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
             #print("converged")
             # Draw final level set function
             contour = copy.deepcopy(phi)
-            contour[contour > 0] = 0
+            contour[contour >= 0] = 0
             contour[contour < 0] = 1
             #plt.imshow(contour)
             #plt.show()
@@ -143,7 +143,7 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
                # plt.imshow(contour)
                 #plt.show()
 
-    return phi
+    return contour
 
 
 def hessian(x):
@@ -243,7 +243,6 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
     combs_params = np.array(list(itertools.product(*trial_params))) #g ets all combinations of params for each validation step
 
     # set placeholders for the prediction image storage and the prediction error storage
-    pred_ACs=[]
     error = []
 
     # collapse the true LV contour for use when computing the f1 score vrs the collapsed predictions
@@ -255,13 +254,17 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
         # loop through each image and get a prediction by evolving the contour
         for c in range(0, dim[0]):
 
+            pred_ACs=[]
+            print 'Processing image %d.....,' % c
             current_pred = evolve_contour(lv = contour_preds[c], roi = roi_images[c], deltaT=0.1,
                                  alpha1=combs_params[p,0], alpha2=combs_params[p,1], alpha3=combs_params[p,2],
-                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 100)
+                                 eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1000)
+
             # collect ACs
             pred_ACs.append(current_pred)
 
         # collapse the new predictions for use in f1 score calculation
+
         pred_ACs_col = np.reshape( pred_ACs, (dim[0],(dim[1]* dim[2])))
 
         # calcualte error
