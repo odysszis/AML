@@ -193,7 +193,7 @@ def fine_tuning(learning_rate = 0.1, n_epochs = 1000, nkerns = 100, batch_size =
     ######################
     # BUILD ACTUAL MODEL #
     ######################
-    print('... building the model')
+    #print('... building the model')
 
     # Reshape matrix of images of shape (batch_size, 64 * 64)
     # to a 4D tensor of shape (batch_size, 1, 64, 64)

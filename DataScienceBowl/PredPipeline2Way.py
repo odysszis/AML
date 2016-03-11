@@ -129,7 +129,7 @@ class Patient(object):
         """
         self.big_slices = []
         self.small_slices = []
-        for dirs in os.walk(train_path):
+        for dirs in os.walk(os.path.join(train_path, study)):
             saxno = re.search('sax_(\d+)', dirs[0])
             if saxno is not None:
                 dicom_file_list = dirs[2]
@@ -332,7 +332,7 @@ def calc_volarea(patient):
  """
 
 
-def regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv'):
+def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv'):
 
     """"
     Method for regressing final kaggle predictions to the provided patient training volumes
@@ -385,7 +385,7 @@ if __name__ == "__main__":
 
 
     # contains 'train', 'validate', etc
-    data_path = '../DataScienceBowl/data'
+    data_path = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
 
     labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
     label_dict = {}
@@ -398,9 +398,10 @@ if __name__ == "__main__":
     # contains 'sax5', 'sax6', ...
     studies = next(os.walk(train_path))[1]
 
-    results_csv = open('results.csv', 'w')
+    results_csv = open('/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv', 'w')
 
     for study in studies:
+        print "study:" + study
         patient = Patient(os.path.join(train_path, study), study)
         print 'Processing patient %s...' % patient.name
         patient._read_all_dicom_images()
@@ -418,4 +419,4 @@ if __name__ == "__main__":
         print 'Done'
     results_csv.close()
 
-    regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv') # regress final volumes
+    regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv') # regress final volumes
