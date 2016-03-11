@@ -22,7 +22,7 @@ class SA(object):
         numpy_rng,
         theano_rng=None,
         n_ins=4096,
-        hidden_layers_sizes=[200, 100,100, 200],
+        hidden_layers_sizes=[200, 100, 100, 200],
         n_outs=4096):
 
         self.sigmoid_layers = []
@@ -309,26 +309,26 @@ if __name__ == "__main__":
 
 
     pretrainedSA = pretrain_sa(train_data=train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=500, model_class=SA,
-                                            learning_rate=0.01, lam=0.0001, beta=3, rho = 0.1)
+                               n_epochs=150, model_class=SA,
+                                            learning_rate=100, lam=0.0001, beta=3, rho = 0.1)
 
     finetunedSA = finetune_sa(train_data =train_roi, train_masks=mask_roi, numbatches =numbatches,
-                               n_epochs=1000, pretrainedSA=pretrainedSA,
-                                            learning_rate=0.01, lam=0.0001)
+                               n_epochs=150, pretrainedSA=pretrainedSA,
+                                            learning_rate=100, lam=0.0001)
 
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUpremodel', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_PreModel', 'wb') as f:
         pickle.dump(pretrainedSA, f)
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUmodel', 'wb') as g:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Model', 'wb') as g:
         pickle.dump(finetunedSA, g)
 
     train_roi = np.reshape(train_roi, (dim[0], dim[1],dim[2]))
     mask_roi = np.reshape(mask_roi, (dim[0], dim[1],dim[2]))
-    mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_RLUmodel')
+    mask_predictions = predict_sa(train_roi, trained_SA_path = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/SA_Model')
 
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/datadata/SA_RLUpremodel', 'wb') as f:
+    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/datadata/SA_Pred', 'wb') as f:
         pickle.dump(mask_predictions, f)
 
 
