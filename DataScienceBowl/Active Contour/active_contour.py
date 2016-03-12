@@ -26,124 +26,114 @@ def evolve_contour(lv, roi, deltaT=0.1, alpha1=1, alpha2=1, alpha3=0.1, eps=1 / 
     :param eps: parameter for the function approximating the delta_0 function
     :return: evolved level set function
     """
-    # error handling: inputs must be 64 x 64
-    # if np.shape(lv) != (64, 64) | np.shape(roi)!= (64, 64):
-    #    raise TypeError("lv and roi must be 64 x 64")
-    if np.unique(lv).size > 2:
-        raise TypeError("lv must be binary")
+    try:
+        # error handling: inputs must be 64 x 64
+        # if np.shape(lv) != (64, 64) | np.shape(roi)!= (64, 64):
+        #    raise TypeError("lv and roi must be 64 x 64")
+        if np.unique(lv).size > 2:
+            raise TypeError("lv must be binary")
 
-    # Initialize phi as a signed distance function which looks like a ice cream cone. It
-    # computes for each point in the 64 x 64 region of interest its distance to
-    # the closest contour point in the binary image LV.
+        # Initialize phi as a signed distance function which looks like a ice cream cone. It
+        # computes for each point in the 64 x 64 region of interest its distance to
+        # the closest contour point in the binary image LV.
 
-    phi = copy.deepcopy(lv)
-    phi[phi == 1] = -1
-    phi[phi == 0] = 1
-    phi = 10 * skfmm.distance(phi)  # now phi is a signed distance function which is negative inside the contour and
+        phi = copy.deepcopy(lv)
+        phi[phi == 1] = -1
+        phi[phi == 0] = 1
+        phi = 10 * skfmm.distance(phi)  # now phi is a signed distance function which is negative inside the contour and
 
-    # positive outside
-    # we will store the initialization of phi again in an extra variable because
-    # we have to recall it in every evolution step
-    phi0 = copy.deepcopy(phi)
-    # START ENERGY OPTIMIZATION
-    convergence = False
-    cIter = 1
-    # create imshow object. in each iteration update that figure
+        # positive outside
+        # we will store the initialization of phi again in an extra variable because
+        # we have to recall it in every evolution step
+        phi0 = copy.deepcopy(phi)
+        # START ENERGY OPTIMIZATION
+        convergence = False
+        cIter = 1
+        # create imshow object. in each iteration update that figure
 
-    while not convergence:
+        while not convergence:
 
-        # 1. compute all finite differences
-        # this will be done by the divergence function, so forget about this step
-        # if cIter == 521:
-        #    pdb.set_trace()
-        # 2. compute averages inside and outside contour
-        # 2a. average outside
-        c1 = np.sum(roi * heavyside(phi)) / (phi[phi >= 0].size + 0.00000001)
-        c2 = np.sum(roi * heavyside(-phi)) / (phi[phi < 0].size + 0.00000001)
+            # 1. compute all finite differences
+            # this will be done by the divergence function, so forget about this step
+            # if cIter == 521:
+            #    pdb.set_trace()
+            # 2. compute averages inside and outside contour
+            # 2a. average outside
+            c1 = np.sum(roi * heavyside(phi)) / (phi[phi >= 0].size + 0.00000001)
+            c2 = np.sum(roi * heavyside(-phi)) / (phi[phi < 0].size + 0.00000001)
 
 
-        """
-        # 2. compute averages inside and outside contour
-        # 2a. determine which pixels are inside the contour and which are outside
-        # a pixel at (i,j) is inside the contour if phi(i,j) < 0
-        # Create a mask which is True if phi<=0 and False else
-        phi_mask = copy.deepcopy(-phi) # now phi is 1 inside contour and -1 outside
-        phi_mask[phi_mask < 0] = 0     # now phi is 1 inside contour and 0 outside
-        phi_mask = np.ma.make_mask(phi_mask) # create mask
+            """
+            # 2. compute averages inside and outside contour
+            # 2a. determine which pixels are inside the contour and which are outside
+            # a pixel at (i,j) is inside the contour if phi(i,j) < 0
+            # Create a mask which is True if phi<=0 and False else
+            phi_mask = copy.deepcopy(-phi) # now phi is 1 inside contour and -1 outside
+            phi_mask[phi_mask < 0] = 0     # now phi is 1 inside contour and 0 outside
+            phi_mask = np.ma.make_mask(phi_mask) # create mask
 
-        # 2b. Compute average roi pixel value inside the contour (i.e. where phi <= 0)
-        # Wherever mask == True -> apply_mask_to_roi = 1, wherever mask == False -> apply_mask_to_roi = 0
-        avg_roi_inside = np.mean(roi[phi_mask])
-        avg_roi_outside = np.mean(roi[-phi_mask])
-        c1 = avg_roi_outside
-        c2 = avg_roi_inside
-        """
+            # 2b. Compute average roi pixel value inside the contour (i.e. where phi <= 0)
+            # Wherever mask == True -> apply_mask_to_roi = 1, wherever mask == False -> apply_mask_to_roi = 0
+            avg_roi_inside = np.mean(roi[phi_mask])
+            avg_roi_outside = np.mean(roi[-phi_mask])
+            c1 = avg_roi_outside
+            c2 = avg_roi_inside
+            """
 
-        # pdb.set_trace()
-
-        # 3. Compute divergence
-        old_phi = copy.deepcopy(phi)
-        div = get_div(phi)
-
-        # 4. Evolve contour
-        # pdb.set_trace()
-        #force = delta_eps(phi, eps) * (alpha1 * div + (alpha2 * np.power(roi - c2, 2))
-        #                                             - (alpha2 * np.power(roi - c1, 2))
-        #                                                    - (2 * alpha3 * (phi - phi0)))
-        # pdb.set_trace()
-        force = alpha1 * div + alpha2 * np.power(roi - c2, 2) - alpha2 * np.power(roi - c1, 2) - 2 * alpha3 * (phi - phi0)
-
-        """
-        avgout = np.power(roi - c1, 2)
-        plt.close()
-        plt.imshow(avgout)
-        plt.show()
-
-        time.sleep(3)
-
-        avgin = np.power(roi - c2, 2)
-        plt.close()
-        plt.imshow(avgin)
-        plt.show()
-        """
-        phi += deltaT * force
-
-        # 6. stop if phi has converged or maximum number of iterations has been reached
-        if (np.linalg.norm(phi - old_phi, 'fro') < eta) | (cIter == n_max):
-            convergence = True
-            #print("converged")
-            # Draw final level set function
-            contour = copy.deepcopy(phi)
-            contour[contour >= 0] = 0
-            contour[contour < 0] = 1
-            #plt.imshow(contour)
-            #plt.show()
-        elif cIter % n_reinit == 0:  # Check if we have to reinitialize phi
-            # reinitialize by figuring out where phi is neg. and where pos -> define intermediate contour as points
-            # where phi is non-positive and reinitialize as signed distance mapping
-            phiSmallerZero = phi <= 0  # is an array of bools with True where phi>=0 and False else
-            intermediate_contour = phiSmallerZero.astype(int)  # is a binary array that has 1 where phi<=0 and
-            # and 0 else
-            intermediate_contour[intermediate_contour == 1] = -1  # skfmm.distance wants the inner part of the contour
-            # to be -1...
-            intermediate_contour[intermediate_contour == 0] = 1  # ...and the outer part +1
-            phi = skfmm.distance(intermediate_contour)  # reinitialize phi as signed distance function
-            cIter += 1
-            #print(cIter)
-        else:
-            cIter += 1
-            #print("cIter", cIter)
-            # draw contour: update the pixels and then draw the figure
             # pdb.set_trace()
-            if cIter % n_max == 0:
-                contour = copy.deepcopy(phi)
-                contour[contour > 0] = 0
-                contour[contour < 0] = 1
-                contour = contour + roi
-               # plt.imshow(contour)
-                #plt.show()
 
-    return contour
+            # 3. Compute divergence
+            old_phi = copy.deepcopy(phi)
+            div = get_div(phi)
+
+            # 4. Evolve contour
+            # pdb.set_trace()
+            #force = delta_eps(phi, eps) * (alpha1 * div + (alpha2 * np.power(roi - c2, 2))
+            #                                             - (alpha2 * np.power(roi - c1, 2))
+            #                                                    - (2 * alpha3 * (phi - phi0)))
+            # pdb.set_trace()
+            force = alpha1 * div + alpha2 * np.power(roi - c2, 2) - alpha2 * np.power(roi - c1, 2) - 2 * alpha3 * (phi - phi0)
+
+            phi += deltaT * force
+
+            # 6. stop if phi has converged or maximum number of iterations has been reached
+            if (np.linalg.norm(phi - old_phi, 'fro') < eta) | (cIter == n_max):
+                convergence = True
+                #print("converged")
+                # Draw final level set function
+                contour = copy.deepcopy(phi)
+                contour[contour >= 0] = 0
+                contour[contour < 0] = 1
+
+            elif cIter % n_reinit == 0:  # Check if we have to reinitialize phi
+                # reinitialize by figuring out where phi is neg. and where pos -> define intermediate contour as points
+                # where phi is non-positive and reinitialize as signed distance mapping
+                phiSmallerZero = phi <= 0  # is an array of bools with True where phi>=0 and False else
+                intermediate_contour = phiSmallerZero.astype(int)  # is a binary array that has 1 where phi<=0 and
+                # and 0 else
+                intermediate_contour[intermediate_contour == 1] = -1  # skfmm.distance wants the inner part of the contour
+                # to be -1...
+                intermediate_contour[intermediate_contour == 0] = 1  # ...and the outer part +1
+                phi = skfmm.distance(intermediate_contour)  # reinitialize phi as signed distance function
+                cIter += 1
+                #print(cIter)
+            else:
+                cIter += 1
+                #print("cIter", cIter)
+                # draw contour: update the pixels and then draw the figure
+                # pdb.set_trace()
+                if cIter % n_max == 0:
+                    contour = copy.deepcopy(phi)
+                    contour[contour > 0] = 0
+                    contour[contour < 0] = 1
+                    contour = contour + roi
+        return contour
+
+    except:
+        print "Returning LV as evolution failed."
+        return lv
+
+
 
 
 def hessian(x):
