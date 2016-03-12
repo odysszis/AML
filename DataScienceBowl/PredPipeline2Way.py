@@ -360,7 +360,7 @@ def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl
     esv_regvol = esv_regr.predict(esv_pred)
 
     # concatenate results
-    regressed_results = np.concatenate((patient,esv_label, edv_label, edv_regvol, esv_regvol), axis=1)
+    regressed_results = np.concatenate((patient,edv_label, esv_label, edv_regvol, esv_regvol), axis=1)
 
     # store results in csv file ready for processing
     np.savetxt(
