@@ -99,8 +99,8 @@ class Patient(object):
         d = dicom.read_file(filename)
         sl = d.SliceLocation
         img = d.pixel_array.astype('float')
-        img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
-        img = np.true_divide(img,255)
+     # img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
+     # img = np.true_divide(img,255)
 
         return img
 
@@ -219,10 +219,12 @@ class Patient(object):
         """
         #############################################
         # ACTIVE CONTOUR
-        self.predACContours_big = np.array([[AC.evolve_contour(lv = self.predSAbigContours[s,t], roi=self.imagesROIs_big[s,t])
+        self.predACContours_big = np.array([[AC.evolve_contour(lv = self.predSAbigContours[s,t], roi=self.imagesROIs_big[s,t]
+                                                               , alpha1=2, alpha2=1.5, alpha3=0.002)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.big_slices))])
 
-        self.predACContours_small = np.array([[AC.evolve_contour(lv = self.predSAsmallContours[s,t], roi=self.imagesROIs_small[s,t])
+        self.predACContours_small = np.array([[AC.evolve_contour(lv = self.predSAsmallContours[s,t], roi=self.imagesROIs_small[s,t]
+                                                                 , alpha1=2, alpha2=1.5, alpha3=0.007)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.small_slices))])
         """
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])

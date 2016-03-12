@@ -3,15 +3,17 @@ import os
 import sys
 import timeit
 import logging
-
 import numpy
 import pickle
 import theano
 import theano.tensor as T
 from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv2d
-
 from logisticReg import LogisticRegression, load_data
+import sys
+sys.path.insert(0, '/home/odyss/Desktop/dsb/AML/DataScienceBowl/')
+from LoadData import crop_resize
+
 
 fx = theano.config.floatX
 
@@ -296,6 +298,13 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     ######################
     #   INITIALIZATIONS  #
     ######################
+    dim = inputimages.shape
+    new_images = numpy.zeros((dim[0],64,64))
+
+    if dim[1] > 64:
+        for i in xrange(dim[0]):
+            new_images[i, :, :] = crop_resize(inputimages[i, :, :], newsize=(64, 64))
+            new_images[i, :, :] = numpy.true_divide(new_images[i, :, :], 255)
 
     if fine_tuned_params_path is None:
         b_CNN_input = None
@@ -322,7 +331,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
 
     # manipulate data
 
-    train_set_x = numpy.asarray(inputimages, dtype='float32')
+    train_set_x = numpy.asarray(new_images, dtype='float32')
     dim = train_set_x.shape
     train_set_x = numpy.reshape(train_set_x, (dim[0], (dim[1]*dim[2])))
     train_set_x = theano.shared(train_set_x.astype(fx), borrow=True)                      # convert to 260 x 4096
