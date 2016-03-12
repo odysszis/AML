@@ -46,7 +46,7 @@ mask_roi_small =crop_ROI(images=mask_small, roi=roi_small, roi_dim=(100,100), ne
 show_preds_large = [train_roi_large[i,:,:] + preds_Large[i,:,:] for i in range(np.shape(preds_Large)[0])]
 show_preds_small = [train_roi_small[i,:,:] + preds_Small[i,:,:] for i in range(np.shape(preds_Small)[0])]
 
-pdb.set_trace()
+#pdb.set_trace()
 
 """
     Trial parameter ranges: alpha1{1, 1.5, 2}, alpha 2{1.5,2,2.5},  alpha 3 = {0, ..., 0.01} steps 0.001
@@ -54,8 +54,18 @@ pdb.set_trace()
 """
 
 #params are [alpha1 set, alpha 2 set, alpha3 set]
-# pred IDs LARGE: 0, 1, 60, 70, 100, 200, 340
+# pred IDs small: 0, 1, 60, 70, 100, 200, 340
 # pred IDs LARGE: 0, 5, 100, 250, 340
+
+preds_Small = preds_Small[[0, 1, 60, 70, 100, 200, 340],:,:]
+preds_Large = preds_Large[[0, 5, 100, 250, 340],:,:]
+
+train_roi_large = train_roi_large[[0, 5, 100, 250, 340],:,:]
+train_roi_small= train_roi_small[[0, 1, 60, 70, 100, 200, 340],:,:]
+
+mask_roi_large = mask_roi_large [[0, 5, 100, 250, 340],:,:]
+mask_roi_small = mask_roi_small [[0, 1, 60, 70, 100, 200, 340],:,:]
+
 params_large = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
 params_small = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
 

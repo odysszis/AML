@@ -241,11 +241,12 @@ def ac_val(contour_preds, roi_images, contour_labels, trial_params):
     # loop through all the parameter combinations
     for p in range(0, len(combs_params)):
         pred_ACs = []
+        print '##########------Paramaeter combo %d --------- ################,' % p
         # loop through each image and get a prediction by evolving the contour
         for c in range(0, dim[0]):
 
             print 'Processing image %d.....,' % c
-            print 'Paramaeter combo %d.....,' % p
+
             current_pred = evolve_contour(lv = contour_preds[c], roi = roi_images[c], deltaT=0.1,
                                  alpha1=combs_params[p,0], alpha2=combs_params[p,1], alpha3=combs_params[p,2],
                                  eps=1 / np.pi, eta=1e-5, n_reinit=10, n_max = 1000)
