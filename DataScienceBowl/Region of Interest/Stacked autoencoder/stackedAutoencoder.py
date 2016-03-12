@@ -1,4 +1,3 @@
-
 import theano.tensor as T
 import numpy as np
 from theano.tensor.shared_randomstreams import RandomStreams
@@ -10,6 +9,7 @@ from scipy import misc
 #import matplotlib.pyplot as plt
 import pickle
 import os
+fx = theano.config.floatX
 
 class SA(object):
     """Stacked denoising auto-encoder class (SdA)
@@ -93,10 +93,8 @@ class SA(object):
         """
         :type scalar
         :param learning_rate: rate which weighs the gradient step
-
         :type scalar
         :param lam: regularization parameter for the cost function
-
         :type pair (cost, update)
         :return: compute cost and update for one training step of the autoencoder
         """
@@ -219,7 +217,7 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
 
     for i in range(0, dim[0]):
         current_image = np.reshape(images[i,:], ((dim[1]*dim[2]), 1))
-        pred = predict_model(np.transpose(current_image))
+        pred = predict_model(np.transpose(current_image).astype(fx))
         mask_predictions.append(pred)
 
     mask_predictions = np.reshape(mask_predictions, (dim[0], dim[1], dim[2]))
@@ -243,12 +241,15 @@ def crop_ROI(images, roi, roi_dim, newsize):
 
     for i in range(0, dim[0]):
 
-        # prep image files including up sampling roi to 256*256
+        # prep image files including up sampling roi to 64 x 64
         image = images[i, :, :]
         region = roi[i, :, :]
         region = misc.imresize(region, (dim[1], dim[2]))
 
         # get roi co-ords for cropping; using centre
+        if np.max(region) >1:
+           region = np.true_divide(image, 255)
+
         rows, cols = np.where(region == 1)
         cen_x, cen_y = (np.round(np.median(cols)), np.round(np.median(rows)))
 
@@ -296,10 +297,10 @@ if __name__ == "__main__":
     dim = mask_roi.shape
 
     mask_roi = np.reshape(mask_roi, (dim[0], (dim[1]*dim[2])))
-    mask_roi = np.array(mask_roi, dtype='float64')
+    mask_roi = np.array(mask_roi, dtype=fx)
 
     train_roi = np.reshape(train_roi, (dim[0], (dim[1]*dim[2])))
-    train_roi= np.array(train_roi, dtype='float64')
+    train_roi= np.array(train_roi, dtype=fx)
 
     numbatches = 1
     batchdim = train.shape[0]/numbatches
@@ -330,7 +331,3 @@ if __name__ == "__main__":
 
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/datadata/SA_Pred', 'wb') as f:
         pickle.dump(mask_predictions, f)
-
-
-
-
