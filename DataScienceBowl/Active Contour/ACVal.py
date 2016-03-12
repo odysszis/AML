@@ -20,24 +20,31 @@ LOCALDATAPATH = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
 # load required data
 
 # binary region of interest square (output from CNN)
-roi = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32')
+roi_large = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32_large')
+roi_small = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32_small')
 
 # original training image
-train = np.load(LOCALDATAPATH + 'SBXtrainImage256')
+train_large = np.load(LOCALDATAPATH + 'SBXtrainImage256_large')
+train_small = np.load(LOCALDATAPATH + 'SBXtrainImage256_small')
 
 # original training binary contour
-mask = np.load(LOCALDATAPATH + 'SBXtrainMask256')
+mask_large = np.load(LOCALDATAPATH + 'SBXtrainMask256_large')
+mask_small = np.load(LOCALDATAPATH + 'SBXtrainMask256_small')
 
 # predictions from SA based on the above data
-preds = np.load(LOCALDATAPATH + 'SA_predictions')
-#preds = preds[0:2, :, :]
-# crop original image and contour data to match the region of the predictions
-train_roi =crop_ROI(images=train, roi=roi, roi_dim=(100,100), newsize=(64, 64))
-#train_roi = train_roi[0:2, :, :]
-mask_roi =crop_ROI(images= mask, roi=roi, roi_dim=(100,100), newsize=(64, 64))
-#mask_roi = mask_roi[0:2, :, :] #add subset
+preds_Large = np.load(LOCALDATAPATH + 'SA_predictions_large')
+preds_Small = np.load(LOCALDATAPATH + 'SA_predictions_small')
 
-tmp = [train_roi[i,:,:] + preds[i,:,:] for i in range(np.shape(preds)[0])]
+# crop original image and contour data to match the region of the predictions
+train_roi_large =crop_ROI(images=train_large, roi=roi_large, roi_dim=(100,100), newsize=(64, 64))
+train_roi_small =crop_ROI(images=train_small, roi=roi_small, roi_dim=(100,100), newsize=(64, 64))
+
+mask_roi_large =crop_ROI(images=mask_large, roi=roi_large, roi_dim=(100,100), newsize=(64, 64))
+mask_roi_small =crop_ROI(images=mask_small, roi=roi_small, roi_dim=(100,100), newsize=(64, 64))
+
+
+show_preds_large = [train_roi_large[i,:,:] + preds_Large[i,:,:] for i in range(np.shape(preds_Large)[0])]
+show_preds_small = [train_roi_small[i,:,:] + preds_Small[i,:,:] for i in range(np.shape(preds_Small)[0])]
 
 pdb.set_trace()
 """
@@ -46,11 +53,15 @@ pdb.set_trace()
 """
 
 #params are [alpha1 set, alpha 2 set, alpha3 set]
-# pred IDs: 0, 5, 100, 250, 340
-params = [[1, 1.5,2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
+# pred IDs LARGE: 0, 1, 60, 70, 100, 200, 340
+# pred IDs LARGE: 0, 5, 100, 250, 340
+params_large = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
+params_small = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
 
 # run the validation function to find best set of parameters from the combinations available in the above list
 
-best_params = AC.ac_val(preds, train_roi, mask_roi, params)
+best_params_Large = AC.ac_val(preds_Large, train_roi_large, mask_roi_large, params_large)
+best_params_Small = AC.ac_val(preds_Small, train_roi_small, mask_roi_small, params_small)
 
-best_params.dump(LOCALDATAPATH + 'AC_params')
+best_params_Large.dump(LOCALDATAPATH + 'AC_params')
+best_params_Small.dump(LOCALDATAPATH + 'AC_params')
