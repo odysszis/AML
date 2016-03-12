@@ -18,22 +18,33 @@ import pdb
 LOCALDATAPATH = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
 
 # load required data
-
+id_list_large = [0,1,6,70,100,200]
+id_list_small = [0,5,100,250,340]
+# pred IDs LARGE: 0, 1, 6, 70, 100, 200
+# pred IDs LARGE: 0, 5, 100, 250, 340
 # binary region of interest square (output from CNN)
 roi_large = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32_large')
 roi_small = np.load(LOCALDATAPATH + 'SBXtrainBinaryMask32_small')
+roi_large = roi_large[id_list_large,:,:]
+roi_small = roi_small[id_list_small,:,:]
 
 # original training image
 train_large = np.load(LOCALDATAPATH + 'SBXtrainImage256_large')
 train_small = np.load(LOCALDATAPATH + 'SBXtrainImage256_small')
+train_large = train_large[id_list_large,:,:]
+train_small = train_small[id_list_small,:,:]
 
 # original training binary contour
 mask_large = np.load(LOCALDATAPATH + 'SBXtrainMask256_large')
 mask_small = np.load(LOCALDATAPATH + 'SBXtrainMask256_small')
+mask_large = mask_large[id_list_large,:,:]
+mask_small = mask_small[id_list_small,:,:]
 
 # predictions from SA based on the above data
 preds_Large = np.load(LOCALDATAPATH + 'SA_predictions_large')
 preds_Small = np.load(LOCALDATAPATH + 'SA_predictions_small')
+preds_Large = preds_Large[id_list_large,:,:]
+preds_Small = preds_Small[id_list_small,:,:]
 
 # crop original image and contour data to match the region of the predictions
 train_roi_large =crop_ROI(images=train_large, roi=roi_large, roi_dim=(100,100), newsize=(64, 64))
@@ -46,15 +57,14 @@ mask_roi_small =crop_ROI(images=mask_small, roi=roi_small, roi_dim=(100,100), ne
 show_preds_large = [train_roi_large[i,:,:] + preds_Large[i,:,:] for i in range(np.shape(preds_Large)[0])]
 show_preds_small = [train_roi_small[i,:,:] + preds_Small[i,:,:] for i in range(np.shape(preds_Small)[0])]
 
-pdb.set_trace()
+#pdb.set_trace()
 """
     Trial parameter ranges: alpha1{1, 1.5, 2}, alpha 2{1.5,2,2.5},  alpha 3 = {0, ..., 0.01} steps 0.001
 
 """
 
 #params are [alpha1 set, alpha 2 set, alpha3 set]
-# pred IDs LARGE: 0, 1, 60, 70, 100, 200, 340
-# pred IDs LARGE: 0, 5, 100, 250, 340
+
 params_large = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
 params_small = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01]]
 
