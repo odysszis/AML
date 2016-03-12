@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import active_contour as AC
 import sys
-sys.path.insert(0, '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 import stackedAutoencoder
 from stackedAutoencoder import crop_ROI
 import pdb
@@ -15,7 +15,7 @@ import pdb
 """
 
 # ADD YOUR DATA'S LOCAL DATA PATH
-LOCALDATAPATH = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
+LOCALDATAPATH = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/'
 
 # load required data
 
@@ -47,6 +47,7 @@ show_preds_large = [train_roi_large[i,:,:] + preds_Large[i,:,:] for i in range(n
 show_preds_small = [train_roi_small[i,:,:] + preds_Small[i,:,:] for i in range(np.shape(preds_Small)[0])]
 
 pdb.set_trace()
+
 """
     Trial parameter ranges: alpha1{1, 1.5, 2}, alpha 2{1.5,2,2.5},  alpha 3 = {0, ..., 0.01} steps 0.001
 
@@ -63,5 +64,5 @@ params_small = [[1, 1.5, 2], [1.5, 2, 2.5], [0, 0.001, 0.002, 0.003, 0.004, 0.00
 best_params_Large = AC.ac_val(preds_Large, train_roi_large, mask_roi_large, params_large)
 best_params_Small = AC.ac_val(preds_Small, train_roi_small, mask_roi_small, params_small)
 
-best_params_Large.dump(LOCALDATAPATH + 'AC_params')
-best_params_Small.dump(LOCALDATAPATH + 'AC_params')
+best_params_Large.dump(LOCALDATAPATH + 'AC_params_Large')
+best_params_Small.dump(LOCALDATAPATH + 'AC_params_Small')
