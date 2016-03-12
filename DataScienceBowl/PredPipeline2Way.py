@@ -108,7 +108,7 @@ class Patient(object):
     # images: [slice_height x time x 64 x 64]
     # also calculates slice thickness and area_multiplier (one for all images)
     def _read_all_dicom_images(self):
-
+        """
         #Computing distance between...
         f1 = self._filename(self.slices[0], self.time[0])
         d1 = dicom.read_file(f1)
@@ -126,10 +126,10 @@ class Patient(object):
             except AttributeError:
                 dist = 8  # better than nothing...
 
-
+        """
         self.big_slices = []
         self.small_slices = []
-        for dirs in os.walk(train_path):
+        for dirs in os.walk(os.path.join(train_path, study)):
             saxno = re.search('sax_(\d+)', dirs[0])
             if saxno is not None:
                 dicom_file_list = dirs[2]
@@ -159,8 +159,8 @@ class Patient(object):
         # logic is better
         #
         # maybe set dist = d1.SliceThickness
-        self.dist = dist
-        self.area_multiplier = x * y
+        #self.dist = dist
+        #self.area_multiplier = x * y
 
 
 
@@ -230,13 +230,14 @@ class Patient(object):
         """
 
     def calc_areas(self):
-
+        """
         if (self.predACContours_small is None) | (self.predACContours_big is None):
             print("First pass images through Active Contour to get a prediciton. No predictions for lv found.")
             return
         elif (len(np.shape(self.predACContours_small) != 4)) | (len(np.shape(self.predACContours_big) != 4)):
             print("The lv predictions must be in the shape (num of slices, num of time steps, height, width")
             return
+        """
 
         # Specify number of slices and time steps among the group of small and big images
         [l_big, times, _, _] = np.shape(self.predACContours_big)
@@ -331,7 +332,7 @@ def calc_volarea(patient):
  """
 
 
-def regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv'):
+def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv'):
 
     """"
     Method for regressing final kaggle predictions to the provided patient training volumes
@@ -384,7 +385,7 @@ if __name__ == "__main__":
 
 
     # contains 'train', 'validate', etc
-    data_path = '../DataScienceBowl/data'
+    data_path = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
 
     labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
     label_dict = {}
@@ -397,13 +398,16 @@ if __name__ == "__main__":
     # contains 'sax5', 'sax6', ...
     studies = next(os.walk(train_path))[1]
 
-    results_csv = open('results.csv', 'w')
+    results_csv = open('/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv', 'w')
 
     for study in studies:
+        print "study:" + study
         patient = Patient(os.path.join(train_path, study), study)
+        print 'Processing patient %s...' % patient.name
         patient._read_all_dicom_images()
         patient.predictContours()
-        print 'Processing patient %s...' % patient.name
+        print 'predict Contour done'
+
         try:
             [ESA, EDA] = patient.calc_areas()
             # IMPORTANT: ESA and EDA must be passed into the volume regression
@@ -412,6 +416,7 @@ if __name__ == "__main__":
             results_csv.write('%s,%f,%f,%f,%f\n' % (patient.name, edv, esv, EDA, ESA))
         except Exception as e:
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
-        results_csv.close()
+        print 'Done'
+    results_csv.close()
 
-    regress_vol(resultspath = '.../AML/DataScienceBowl/results.csv') # regress final volumes
+    regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv') # regress final volumes
