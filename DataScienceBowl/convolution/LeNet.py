@@ -11,7 +11,7 @@ from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv2d
 from logisticReg import LogisticRegression, load_data
 import sys
-sys.path.insert(0, '/home/odyss/Desktop/dsb/AML/DataScienceBowl/')
+sys.path.insert(0, '/home/ubuntu/AML/DataScienceBowl/')
 from LoadData import crop_resize
 
 
@@ -107,8 +107,8 @@ class LeNetConvPoolLayer(object):
         pooled_out = downsample.max_pool_2d(
             input=conv_out,
             ds=poolsize,
-            ignore_border=True,
-            mode='average_exc_pad'
+            ignore_border=True
+            #mode='average_exc_pad'
         )
         # pooled_out should be batch_size x 100 x 9 x 9
 
@@ -316,7 +316,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
             params = pickle.load(f)
 
         # load pre-trained parameters
-        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params
+        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params[0]
         W_logistic = numpy.asarray(W_logistic,dtype='float32')
         b_logistic = numpy.asarray(b_logistic,dtype='float32')
         W_CNN_input = numpy.asarray(W_CNN_input,dtype='float32')
@@ -380,7 +380,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
-    with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'wb') as f:
+    with open('/home/ubuntu/AML/DataScienceBowl/data/CNN_output.pickle', 'wb') as f:
         pickle.dump(images, f)
 
     return images
