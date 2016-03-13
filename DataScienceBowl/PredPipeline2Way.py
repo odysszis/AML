@@ -66,7 +66,7 @@ class Patient(object):
             # cslice_files contains a list ['IM-4557-0021.dcm', 'IM-4557-0026.dcm',...]
             offset = None
             for cslice_file in cslice_files:
-                m = re.match('IM-(\d{4,})-(\d{4})\.dcm', cslice_file)
+                m = re.match('IM-(\d*)-(\d*)\.dcm', cslice_file)
                 if m is not None:
                     if first:
                         times.append(int(m.group(2)))
