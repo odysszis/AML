@@ -11,16 +11,16 @@ import re
 import dicom
 from LoadData import crop_resize
 import sys
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/convolution/')
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/convolution')
 import LeNet
 from LeNet import predict as CNNpred
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
 from stackedAutoencoder import SA
 from sklearn import linear_model
 
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Active Contour/')
+sys.path.insert(0, '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 from numpy import genfromtxt
 
@@ -207,10 +207,10 @@ class Patient(object):
         # PREDICT CONTOUR USING SA
         # IMPORTANT: Change trained_SA_path to ../SA_Xmodel_big and ../SA_Xmodel_small, respectively
         self.predSAbigContours = np.array([SApred(self.imagesROIs_big[s,:],
-                                               trained_SA_path ='/Users/mh/AML/DataScienceBowl/data/SA_Xmodel')
+                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/DataScienceBowl/data/SA_Xmodel')
                                         for s in range(0, len(self.big_slices))])
         self.predSAsmallContours = np.array([SApred(self.imagesROIs_small[s,:],
-                                               trained_SA_path ='/Users/mh/AML/DataScienceBowl/data/SA_Xmodel')
+                                               trained_SA_path ='/Users/Peadar/Documents/KagglePythonProjects/SA_Xmodel')
                                         for s in range(0, len(self.small_slices))])
         """
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
@@ -231,15 +231,17 @@ class Patient(object):
                                          for t in range(0, len(self.time))] for s in range(0, len(self.slices))])
         """
 
+
+    """
     def calc_areas(self):
-        """
+
         if (self.predACContours_small is None) | (self.predACContours_big is None):
             print("First pass images through Active Contour to get a prediciton. No predictions for lv found.")
             return
         elif (len(np.shape(self.predACContours_small) != 4)) | (len(np.shape(self.predACContours_big) != 4)):
             print("The lv predictions must be in the shape (num of slices, num of time steps, height, width")
             return
-        """
+
 
         # Specify number of slices and time steps among the group of small and big images
         [l_big, times, _, _] = np.shape(self.predACContours_big)
@@ -279,7 +281,89 @@ class Patient(object):
         # Add biggest areas among small and big images together -> total area of slices at end diastole
         self.end_diastole_area = areas_big[max_area_big_idx] + areas_small[max_area_small_idx]
         return [self.end_systole_area, self.end_diastole_area]
+    """
 
+    def calc_areas(self):
+        """
+        if (self.predACContours_small is None) | (self.predACContours_big is None):
+            print("First pass images through Active Contour to get a prediciton. No predictions for lv found.")
+            return
+        elif (len(np.shape(self.predACContours_small) != 4)) | (len(np.shape(self.predACContours_big) != 4)):
+            print("The lv predictions must be in the shape (num of slices, num of time steps, height, width")
+            return
+        """
+
+        # Specify number of slices and time steps among the group of small and big images
+        b = len(self.predACContours_big)
+        s = len(self.predACContours_small)
+
+        if b > 0:
+            [l_big, timesb, _, _] = np.shape(self.predACContours_big)
+        else:
+            l_big = 0
+            timesb = 0
+
+        if s > 0:
+            [l_small, timess, _, _] = np.shape(self.predACContours_small)
+        else:
+            l_small = 0
+            timess = 0
+
+        if timesb == 0:
+            times = timess
+        elif timesb != 0:
+            times = timesb
+        else:
+            times = 0
+
+        # Create time dictionaries that map time to the total area at that time for
+        # ... small images
+        areas_small = [(t, 0) for t in range(times)]
+        areas_small = dict(areas_small)
+        # ... big images
+        areas_big = [(t, 0) for t in range(times)]
+        areas_big = dict(areas_big)
+
+        # Compute areas at each time step for both small and big slices
+        for t in range(times):
+            # at time step t, compute the areas of slices in...
+            for hb in range(l_big):
+                # ... big images
+                areas_big[t] += np.count_nonzero(self.predACContours_big[hb][t])
+            for hs in range(l_small):
+                # ... small images
+                areas_small[t] += np.count_nonzero(self.predACContours_small[hs][t])
+
+        # Find the indices in the time dictionaries that correspond to smallest area...
+        # ... among small images
+
+        if len(areas_small) > 0:
+            min_area_small_idx = min(areas_small, key=areas_small.get)
+            max_area_small_idx = max(areas_small, key=areas_small.get)
+        # ... among big images
+        if len(areas_big) > 0:
+            min_area_big_idx = min(areas_big, key=areas_big.get)
+            max_area_big_idx = max(areas_big, key=areas_big.get)
+
+        # Find the indices in the time dictionaries that correspond to smallest area...
+        # ... among small images
+
+        # ... among big images
+
+
+        # Add smallest areas among small and big images together -> total area of slices at end systole
+        #self.end_systole_area = areas_big[min_area_big_idx] + areas_small[min_area_small_idx]
+        # Add biggest areas among small and big images together -> total area of slices at end diastole
+        #self.end_diastole_area = areas_big[max_area_big_idx] + areas_small[max_area_small_idx]
+
+        areas_total = []
+        for t in range(times):
+            areas_total.append(areas_small[t] + areas_big[t])
+
+        self.end_systole_area = np.min(areas_total)
+        self.end_diastole_area = np.max(areas_total)
+
+        return [self.end_systole_area, self.end_diastole_area]
 
 # the single pipeline area and volume cals are depreciated due to added complexity of two way
 """
@@ -334,7 +418,7 @@ def calc_volarea(patient):
  """
 
 
-def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv'):
+def regress_vol(resultspath = '/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/results.csv'):
 
     """"
     Method for regressing final kaggle predictions to the provided patient training volumes
@@ -373,10 +457,10 @@ def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl
         newline='\n')  # new line character
 
     # pickle dump regression models built using the training data, so they can be loaded and used at test time
-    with open('.../AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
+    with open('../AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
         pickle.dump(esv_regvol , f)
 
-    with open('.../AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
+    with open('../AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
         pickle.dump(edv_regvol , fi)
 
 
