@@ -207,6 +207,7 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
     with open(trained_SA_path) as f:
          SA_inst = pickle.load(f)
 
+    images = np.asarray(images)
     dim = images.shape
     images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
 
@@ -237,10 +238,11 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
 
 def crop_ROI(images, roi, roi_dim, newsize):
 
-    dim = images.shape
+    # images is a list of arrays
+    dim = len(images)
     image_roi = []
 
-    for i in range(0, dim[0]):
+    for i in range(0, dim):
 
         # prep image files including up sampling roi to 64 x 64
         image = images[i]

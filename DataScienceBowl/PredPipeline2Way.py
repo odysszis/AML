@@ -86,6 +86,7 @@ class Patient(object):
         self.slices_map = slices_map
         Patient.patient_count += 1
         self.name = study
+        self.study = study
         self.images = []
         self.predROIs = []
         self.imagesROIs = []
@@ -105,9 +106,6 @@ class Patient(object):
         d = dicom.read_file(filename)
         sl = d.SliceLocation
         img = d.pixel_array.astype('float')
-
-        # img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
-        # img = np.true_divide(img,255)
 
         return img
 
@@ -161,10 +159,10 @@ class Patient(object):
                                 for d in self.slices])
         """
 
-        nnn = [[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.big_slices]
-        self.big_images = np.array(nnn)
+        self.big_images = [[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.big_slices]
 
-        self.small_images = np.array([[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.small_slices])
+
+        self.small_images =[[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.small_slices]
 
         # sets dist equal to the two first slices distance (subtracting first
         # from second) or equal to first slice's thickness. I THINK the second
@@ -191,14 +189,16 @@ class Patient(object):
         # PREDICT ROI MASKS
         # IMPORTANT: Change fine_tuned_params_path file to fine_tune_paramsX_big.pickle and .._small.pickle respectively
 
+        # self.big_images and self.small_images are both lists of lists of arrays
         b = len(self.big_images)
         s = len(self.small_images)
-        self.pred_big_ROIs = np.array([CNNpred(inputimages = self.big_images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXlarge.pickle')
-                                        for s in range(0, len(self.big_slices))])
-        self.pred_small_ROIs = np.array([CNNpred(inputimages = self.small_images[s,:], batch_size=1,
-                                          fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXsmall.pickle')
-                                        for s in range(0, len(self.small_slices))])
+        # CNN should return list of arrays
+        self.pred_big_ROIs = [CNNpred(inputimages = self.big_images[s], batch_size=1,
+                                      fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXlarge.pickle')
+                              for s in range(0, len(self.big_slices))]
+        self.pred_small_ROIs = [CNNpred(inputimages = self.small_images[s], batch_size=1,
+                                        fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXsmall.pickle')
+                                for s in range(0, len(self.small_slices))]
 
         """
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
@@ -207,12 +207,13 @@ class Patient(object):
         """
         #############################################
         # CROP IMAGES TO ROIs
-        self.imagesROIs_big = np.array([crop_ROI(images=self.big_images[s, :], roi=self.pred_big_ROIs[s, :],
-                                             roi_dim=(100,100), newsize=(64, 64))
-                                        for s in range(0, len(self.big_slices))])
-        self.imagesROIs_small = np.array([crop_ROI(images=self.small_images[s, :], roi=self.pred_small_ROIs[s, :],
-                                             roi_dim=(100,100), newsize=(64, 64))
-                                        for s in range(0, len(self.small_slices))])
+        # crop ROI should return list of arrays
+        self.imagesROIs_big = [crop_ROI(images=self.big_images[s], roi=self.pred_big_ROIs[s],
+                                        roi_dim=(100,100), newsize=(64, 64))
+                                        for s in range(0, len(self.big_slices))]
+        self.imagesROIs_small = [crop_ROI(images=self.small_images[s], roi=self.pred_small_ROIs[s],
+                                          roi_dim=(100,100), newsize=(64, 64))
+                                        for s in range(0, len(self.small_slices))]
 
         """
         self.imagesROIs = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:],
@@ -223,10 +224,11 @@ class Patient(object):
         # PREDICT CONTOUR USING SA
         # IMPORTANT: Change trained_SA_path to ../SA_Xmodel_big and ../SA_Xmodel_small, respectively
 
-        self.predSAbigContours = np.array([SApred(self.imagesROIs_big[s,:],
+
+        self.predSAbigContours = np.array([SApred(self.imagesROIs_big[s],
                                                trained_SA_path ='/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/SA_RLUmodel_large')
                                         for s in range(0, len(self.big_slices))])
-        self.predSAsmallContours = np.array([SApred(self.imagesROIs_small[s,:],
+        self.predSAsmallContours = np.array([SApred(self.imagesROIs_small[s],
                                                trained_SA_path ='/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/SA_RLUmodel_small')
                                         for s in range(0, len(self.small_slices))])
 
@@ -238,10 +240,10 @@ class Patient(object):
         #############################################
         # ACTIVE CONTOUR
 
-        self.predACContours_big = np.array([[AC.evolve_contour(lv = self.predSAbigContours[s,t], roi=self.imagesROIs_big[s,t]
+        self.predACContours_big = np.array([[AC.evolve_contour(lv = self.predSAbigContours[s][t], roi=self.imagesROIs_big[s][t]
                                                                , alpha1=2, alpha2=1.5, alpha3=0.002)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.big_slices))])
-        self.predACContours_small = np.array([[AC.evolve_contour(lv = self.predSAsmallContours[s,t], roi=self.imagesROIs_small[s,t]
+        self.predACContours_small = np.array([[AC.evolve_contour(lv = self.predSAsmallContours[s][t], roi=self.imagesROIs_small[s][t]
                                                                  , alpha1=2, alpha2=1.5, alpha3=0.007)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.small_slices))])
 
@@ -452,7 +454,7 @@ if __name__ == "__main__":
     # contains 'sax5', 'sax6', ...
     studies = next(os.walk(train_path))[1]
 
-    results_csv = open('/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/results.csv', 'w')
+    results_csv = open('/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/results_401_500.csv', 'w')
 
     for study in studies:
 

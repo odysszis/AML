@@ -298,10 +298,10 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     ######################
     #   INITIALIZATIONS  #
     ######################
-    dim = inputimages.shape
-    new_images = numpy.zeros((dim[0],64,64))
+    dim = len(inputimages)
+    new_images = numpy.zeros((dim,64,64))
 
-    for i in xrange(dim[0]):
+    for i in xrange(dim):
         new_images[i, :, :] = crop_resize(inputimages[i], newsize=(64, 64))
         new_images[i, :, :] = numpy.true_divide(new_images[i], 255)
 
