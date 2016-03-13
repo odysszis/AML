@@ -248,7 +248,7 @@ def crop_ROI(images, roi, roi_dim, newsize):
 
         # get roi co-ords for cropping; using centre
         if np.max(region) >1:
-           region = np.true_divide(image, 255)
+           region = np.true_divide(region, 255)
 
         rows, cols = np.where(region == 1)
         cen_x, cen_y = (np.round(np.median(cols)), np.round(np.median(rows)))
