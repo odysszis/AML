@@ -301,10 +301,9 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     dim = inputimages.shape
     new_images = numpy.zeros((dim[0],64,64))
 
-    if dim[1] > 64:
-        for i in xrange(dim[0]):
-            new_images[i, :, :] = crop_resize(inputimages[i, :, :], newsize=(64, 64))
-            new_images[i, :, :] = numpy.true_divide(new_images[i, :, :], 255)
+    for i in xrange(dim[0]):
+        new_images[i, :, :] = crop_resize(inputimages[i], newsize=(64, 64))
+        new_images[i, :, :] = numpy.true_divide(new_images[i], 255)
 
     if fine_tuned_params_path is None:
         b_CNN_input = None
@@ -316,7 +315,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
             params = pickle.load(f)
 
         # load pre-trained parameters
-        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params
+        W_logistic, b_logistic, W_CNN_input, b_CNN_input = params[0]
         W_logistic = numpy.asarray(W_logistic,dtype='float32')
         b_logistic = numpy.asarray(b_logistic,dtype='float32')
         W_CNN_input = numpy.asarray(W_CNN_input,dtype='float32')
@@ -344,7 +343,7 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     ###############
 
     # build model
-    print('... building the model')
+    #print('... building the model')
     index = T.lscalar()
     x = T.matrix('x', dtype=fx)
 
@@ -380,8 +379,10 @@ def predict(inputimages, nkerns = 100, batch_size = 260, fine_tuned_params_path 
     preds = [predict_model(minibatch_index) for minibatch_index in xrange(n_batches)]
     images = [numpy.reshape(preds[i],(32,32)) for i in xrange(n_batches)]
 
+    '''
     with open('/Users/Peadar/Documents/KagglePythonProjects/AML/DataScienceBowl/data/CNN_output.pickle', 'wb') as f:
         pickle.dump(images, f)
+    '''
 
     return images
 

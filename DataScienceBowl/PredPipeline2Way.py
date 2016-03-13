@@ -11,16 +11,18 @@ import re
 import dicom
 from LoadData import crop_resize
 import sys
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/convolution/')
+sys.path.insert(0, '/home/odyss/Desktop/dsb/AML/DataScienceBowl/convolution/')
 import LeNet
 from LeNet import predict as CNNpred
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
+sys.path.insert(0, '/home/odyss/Desktop/dsb/AML/DataScienceBowl/Region of Interest/Stacked autoencoder/')
 from stackedAutoencoder import predict_sa as SApred
 from stackedAutoencoder import crop_ROI
 from stackedAutoencoder import SA
 from sklearn import linear_model
+import time
+import pdb
 
-sys.path.insert(0, '/Users/mh/AML/DataScienceBowl/Active Contour/')
+sys.path.insert(0, '/home/odyss/Desktop/dsb/AML/DataScienceBowl/Active Contour/')
 import active_contour as AC
 from numpy import genfromtxt
 
@@ -66,12 +68,14 @@ class Patient(object):
             # cslice_files contains a list ['IM-4557-0021.dcm', 'IM-4557-0026.dcm',...]
             offset = None
             for cslice_file in cslice_files:
-                m = re.match('IM-(\d{4,})-(\d{4})\.dcm', cslice_file)
+                #m = re.match('IM-(\d{4,})-(\d{4})\.dcm', cslice_file)
+                m = re.match('IM-(\d*)-(\d*)\.dcm', cslice_file)
                 if m is not None:
                     if first:
                         times.append(int(m.group(2)))
                     if offset is None:
-                        offset = int(m.group(1))
+                        #offset = int(m.group(1))
+                        offset = m.group(1)
             first = False
             slices_map[cslice] = offset
 
@@ -90,17 +94,20 @@ class Patient(object):
 
     # returns the name of a file of a specific slice on specific time
     def _filename(self, cslice, time):
+
         return os.path.join(self.directory, 'sax_%d' % cslice,
-        'IM-%04d-%04d.dcm' % (self.slices_map[cslice], time))
+        'IM-%s-%04d.dcm' % (self.slices_map[cslice], time))
 
     # read one single dicom file
 
     def _read_dicom_image(self, filename):
+
         d = dicom.read_file(filename)
         sl = d.SliceLocation
         img = d.pixel_array.astype('float')
-     # img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
-     # img = np.true_divide(img,255)
+
+        # img = crop_resize(img, newsize=(64,64))  # PH Added preprocessing
+        # img = np.true_divide(img,255)
 
         return img
 
@@ -127,14 +134,20 @@ class Patient(object):
                 dist = 8  # better than nothing...
 
         """
+
         self.big_slices = []
         self.small_slices = []
+
         for dirs in os.walk(os.path.join(train_path, study)):
+
             saxno = re.search('sax_(\d+)', dirs[0])
+
             if saxno is not None:
+
                 dicom_file_list = dirs[2]
                 if re.search('\.dcm', dicom_file_list[0]):
                     file_path = os.path.join(dirs[0], dicom_file_list[0])
+
                 else:
                     file_path = os.path.join(dirs[0], dicom_file_list[1])
                 dicom_file = dicom.read_file(file_path)
@@ -147,13 +160,12 @@ class Patient(object):
                                  for i in self.time]
                                 for d in self.slices])
         """
-        self.big_images = np.array([[self._read_dicom_image(self._filename(d, i))
-                                 for i in self.time]
-                                for d in self.big_slices])
 
-        self.small_images = np.array([[self._read_dicom_image(self._filename(d, i))
-                                 for i in self.time]
-                                for d in self.small_slices])
+        nnn = [[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.big_slices]
+        self.big_images = np.array(nnn)
+
+        self.small_images = np.array([[self._read_dicom_image(self._filename(d, i)) for i in self.time] for d in self.small_slices])
+
         # sets dist equal to the two first slices distance (subtracting first
         # from second) or equal to first slice's thickness. I THINK the second
         # logic is better
@@ -178,12 +190,16 @@ class Patient(object):
         #############################################
         # PREDICT ROI MASKS
         # IMPORTANT: Change fine_tuned_params_path file to fine_tune_paramsX_big.pickle and .._small.pickle respectively
-        self.pred_big_ROIs = np.array([CNNpred(inputimages = self.big_images[s, :], batch_size=1,
-                                          fine_tuned_params_path = '/Users/mh/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
+
+        b = len(self.big_images)
+        s = len(self.small_images)
+        self.pred_big_ROIs = np.array([CNNpred(inputimages = self.big_images[s,:], batch_size=1,
+                                          fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXlarge.pickle')
                                         for s in range(0, len(self.big_slices))])
-        self.pred_small_ROIs = np.array([CNNpred(inputimages = self.small_images[s, :], batch_size=1,
-                                          fine_tuned_params_path = '/Users/mh/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
+        self.pred_small_ROIs = np.array([CNNpred(inputimages = self.small_images[s,:], batch_size=1,
+                                          fine_tuned_params_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/fine_tune_paramsXsmall.pickle')
                                         for s in range(0, len(self.small_slices))])
+
         """
         self.predROIs = np.array([CNNpred(inputimages = self.images[s,:], batch_size=1,
                                           fine_tuned_params_path = '/Users/mh/AML/DataScienceBowl/data/fine_tune_paramsXnew.pickle')
@@ -194,10 +210,10 @@ class Patient(object):
         self.imagesROIs_big = np.array([crop_ROI(images=self.big_images[s, :], roi=self.pred_big_ROIs[s, :],
                                              roi_dim=(100,100), newsize=(64, 64))
                                         for s in range(0, len(self.big_slices))])
-
         self.imagesROIs_small = np.array([crop_ROI(images=self.small_images[s, :], roi=self.pred_small_ROIs[s, :],
                                              roi_dim=(100,100), newsize=(64, 64))
                                         for s in range(0, len(self.small_slices))])
+
         """
         self.imagesROIs = np.array([crop_ROI(images=self.images[s,:], roi=self.predROIs[s,:],
                                              roi_dim=(100,100), newsize=(64, 64))
@@ -206,12 +222,14 @@ class Patient(object):
         #############################################
         # PREDICT CONTOUR USING SA
         # IMPORTANT: Change trained_SA_path to ../SA_Xmodel_big and ../SA_Xmodel_small, respectively
+
         self.predSAbigContours = np.array([SApred(self.imagesROIs_big[s,:],
-                                               trained_SA_path ='/Users/mh/AML/DataScienceBowl/data/SA_Xmodel')
+                                               trained_SA_path ='/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/SA_RLUmodel_large')
                                         for s in range(0, len(self.big_slices))])
         self.predSAsmallContours = np.array([SApred(self.imagesROIs_small[s,:],
-                                               trained_SA_path ='/Users/mh/AML/DataScienceBowl/data/SA_Xmodel')
+                                               trained_SA_path ='/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/SA_RLUmodel_small')
                                         for s in range(0, len(self.small_slices))])
+
         """
         self.predSAContours = np.array([SApred(self.imagesROIs[s,:],
                                                trained_SA_path ='/Users/mh/AML/DataScienceBowl/data/SA_Xmodel')
@@ -219,13 +237,14 @@ class Patient(object):
         """
         #############################################
         # ACTIVE CONTOUR
+
         self.predACContours_big = np.array([[AC.evolve_contour(lv = self.predSAbigContours[s,t], roi=self.imagesROIs_big[s,t]
                                                                , alpha1=2, alpha2=1.5, alpha3=0.002)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.big_slices))])
-
         self.predACContours_small = np.array([[AC.evolve_contour(lv = self.predSAsmallContours[s,t], roi=self.imagesROIs_small[s,t]
                                                                  , alpha1=2, alpha2=1.5, alpha3=0.007)
                                          for t in range(0, len(self.time))] for s in range(0, len(self.small_slices))])
+
         """
         self.predACContours = np.array([[AC.evolve_contour(lv = self.predSAContours[s,t], roi=self.imagesROIs[s,t])
                                          for t in range(0, len(self.time))] for s in range(0, len(self.slices))])
@@ -242,8 +261,27 @@ class Patient(object):
         """
 
         # Specify number of slices and time steps among the group of small and big images
-        [l_big, times, _, _] = np.shape(self.predACContours_big)
-        [l_small, _, _, _] = np.shape(self.predACContours_small)
+        b = len(self.predACContours_big)
+        s = len(self.predACContours_small)
+
+        if b > 0:
+            [l_big, timesb, _, _] = np.shape(self.predACContours_big)
+        else:
+            l_big = 0
+            timesb = 0
+
+        if s > 0:
+            [l_small, timess, _, _] = np.shape(self.predACContours_small)
+        else:
+            l_small = 0
+            timess = 0
+
+        if timesb == 0:
+            times = timess
+        elif timesb != 0:
+            times = timesb
+        else:
+            times = 0
 
         # Create time dictionaries that map time to the total area at that time for
         # ... small images
@@ -265,19 +303,33 @@ class Patient(object):
 
         # Find the indices in the time dictionaries that correspond to smallest area...
         # ... among small images
-        min_area_small_idx = min(areas_small, key=areas_small.get)
+
+        if len(areas_small) > 0:
+            min_area_small_idx = min(areas_small, key=areas_small.get)
+            max_area_small_idx = max(areas_small, key=areas_small.get)
         # ... among big images
-        min_area_big_idx = min(areas_big, key=areas_big.get)
+        if len(areas_big) > 0:
+            min_area_big_idx = min(areas_big, key=areas_big.get)
+            max_area_big_idx = max(areas_big, key=areas_big.get)
+
         # Find the indices in the time dictionaries that correspond to smallest area...
         # ... among small images
-        max_area_small_idx = max(areas_small, key=areas_small.get)
+
         # ... among big images
-        max_area_big_idx = max(areas_big, key=areas_big.get)
+
 
         # Add smallest areas among small and big images together -> total area of slices at end systole
-        self.end_systole_area = areas_big[min_area_big_idx] + areas_small[min_area_small_idx]
+        #self.end_systole_area = areas_big[min_area_big_idx] + areas_small[min_area_small_idx]
         # Add biggest areas among small and big images together -> total area of slices at end diastole
-        self.end_diastole_area = areas_big[max_area_big_idx] + areas_small[max_area_small_idx]
+        #self.end_diastole_area = areas_big[max_area_big_idx] + areas_small[max_area_small_idx]
+
+        areas_total = []
+        for t in range(times):
+            areas_total.append(areas_small[t] + areas_big[t])
+
+        self.end_systole_area = np.min(areas_total)
+        self.end_diastole_area = np.max(areas_total)
+
         return [self.end_systole_area, self.end_diastole_area]
 
 
@@ -334,7 +386,7 @@ def calc_volarea(patient):
  """
 
 
-def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv'):
+def regress_vol(resultspath = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/results.csv'):
 
     """"
     Method for regressing final kaggle predictions to the provided patient training volumes
@@ -373,10 +425,10 @@ def regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl
         newline='\n')  # new line character
 
     # pickle dump regression models built using the training data, so they can be loaded and used at test time
-    with open('.../AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
+    with open('/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/regressionModel_esvVol', 'wb') as f:
         pickle.dump(esv_regvol , f)
 
-    with open('.../AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
+    with open('/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/regressionModel_edvVol', 'wb') as fi:
         pickle.dump(edv_regvol , fi)
 
 
@@ -387,7 +439,7 @@ if __name__ == "__main__":
 
 
     # contains 'train', 'validate', etc
-    data_path = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/'
+    data_path = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/'
 
     labels = np.loadtxt(os.path.join(data_path, 'train.csv'), delimiter=',', skiprows=1)
     label_dict = {}
@@ -400,15 +452,23 @@ if __name__ == "__main__":
     # contains 'sax5', 'sax6', ...
     studies = next(os.walk(train_path))[1]
 
-    results_csv = open('/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv', 'w')
+    results_csv = open('/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/results.csv', 'w')
 
     for study in studies:
+
         print "study:" + study
         patient = Patient(os.path.join(train_path, study), study)
         print 'Processing patient %s...' % patient.name
+
         patient._read_all_dicom_images()
+
+        print 'Predicting contours...'
+
         patient.predictContours()
+
         print 'predict Contour done'
+
+        print 'Calculating volume...'
 
         try:
             [ESA, EDA] = patient.calc_areas()
@@ -419,6 +479,7 @@ if __name__ == "__main__":
         except Exception as e:
             print '***ERROR***: Exception %s thrown by patient %s' % (str(e), patient.name)
         print 'Done'
+
     results_csv.close()
 
-    regress_vol(resultspath = '/Users/mh/Documents/CSML/DSBC/Git/DataScienceBowl/data/results.csv') # regress final volumes
+    #regress_vol(resultspath = '/home/odyss/Desktop/dsb/AML/DataScienceBowl/data/results_final.csv') # regress final volumes

@@ -9,6 +9,7 @@ from scipy import misc
 #import matplotlib.pyplot as plt
 import pickle
 import os
+import pdb
 fx = theano.config.floatX
 
 class SA(object):
@@ -242,20 +243,37 @@ def crop_ROI(images, roi, roi_dim, newsize):
     for i in range(0, dim[0]):
 
         # prep image files including up sampling roi to 64 x 64
-        image = images[i, :, :]
-        region = roi[i, :, :]
-        region = misc.imresize(region, (dim[1], dim[2]))
+        image = images[i]
+        region = roi[i]
+        region = misc.imresize(region, (256, 256))
 
         # get roi co-ords for cropping; using centre
         if np.max(region) >1:
-           region = np.true_divide(image, 255)
+           region = np.true_divide(region, 255)
 
         rows, cols = np.where(region == 1)
         cen_x, cen_y = (np.round(np.median(cols)), np.round(np.median(rows)))
 
+        ind_y_lower = cen_y - (roi_dim[1]/2)
+        ind_y_upper = cen_y + (roi_dim[1]/2)
+        if ind_y_lower < 0:
+            ind_y_upper -= ind_y_lower
+            ind_y_lower = 0
+
+        ind_x_lower = cen_x - (roi_dim[1]/2)
+        ind_x_upper = cen_x + (roi_dim[1]/2)
+        if ind_x_lower < 0:
+            ind_x_upper -= ind_x_lower
+            ind_x_lower = 0
+
+        ind_y_lower = int(ind_y_lower)
+        ind_y_upper = int(ind_y_upper)
+        ind_x_lower = int(ind_x_lower)
+        ind_x_upper = int(ind_x_upper)
+
         # execute  cropping on the image to produce ROI
-        image = image[cen_y - (roi_dim[1]/2):cen_y + (roi_dim[1]/2),
-                cen_x - (roi_dim[0]/2):cen_x + (roi_dim[0]/2)]
+
+        image = image[ind_y_lower:ind_y_upper, ind_x_lower:ind_x_upper]
 
         image = misc.imresize(image, newsize)
 
