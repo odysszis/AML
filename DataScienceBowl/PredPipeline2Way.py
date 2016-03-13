@@ -71,7 +71,7 @@ class Patient(object):
                     if first:
                         times.append(int(m.group(2)))
                     if offset is None:
-                        offset = int(m.group(1))
+                        offset = m.group(1)
             first = False
             slices_map[cslice] = offset
 
@@ -91,7 +91,7 @@ class Patient(object):
     # returns the name of a file of a specific slice on specific time
     def _filename(self, cslice, time):
         return os.path.join(self.directory, 'sax_%d' % cslice,
-        'IM-%04d-%04d.dcm' % (self.slices_map[cslice], time))
+        'IM-%s-%04d.dcm' % (self.slices_map[cslice], time))
 
     # read one single dicom file
 
