@@ -209,7 +209,11 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
 
     images = np.asarray(images)
     dim = images.shape
-    images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
+    dim0 = dim[0]
+    eg_image = images[1]
+    image_dim = eg_image.shape
+
+    images = np.reshape(images, (dim0, (image_dim[0]*image_dim[1])))
 
     mask_predictions = []
 
@@ -218,12 +222,12 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
             outputs= SA_inst.logLayer.y_pred)
 
     for i in range(0, dim[0]):
-        current_image = np.reshape(images[i,:], ((dim[1]*dim[2]), 1))
+        current_image = np.reshape(images[i,:], ((image_dim[0]*image_dim[1]), 1))
         pred = predict_model(np.transpose(current_image).astype(fx))
         mask_predictions.append(pred)
 
-    mask_predictions = np.reshape(mask_predictions, (dim[0], dim[1], dim[2]))
-    images = np.reshape(images, (dim[0], dim[1], dim[2]))
+    mask_predictions = np.reshape(mask_predictions, (dim0, image_dim[0], image_dim[1]))
+    images = np.reshape(images, (dim0, image_dim[0], image_dim[1]))
     masks = np.array(mask_predictions)
 
 #    for i in range(0,10):
