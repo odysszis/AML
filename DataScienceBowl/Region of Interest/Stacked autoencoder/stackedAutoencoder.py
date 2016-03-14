@@ -209,7 +209,9 @@ def predict_sa(images, trained_SA_path = '/Users/Peadar/Documents/KagglePythonPr
 
     images = np.asarray(images)
     dim = images.shape
+    #pdb.set_trace()
     images = np.reshape(images, (dim[0], (dim[1]*dim[2])))
+
 
     mask_predictions = []
 
