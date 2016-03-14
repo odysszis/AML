@@ -107,8 +107,8 @@ class LeNetConvPoolLayer(object):
         pooled_out = downsample.max_pool_2d(
             input=conv_out,
             ds=poolsize,
-            ignore_border=True,
-            mode='average_exc_pad'
+            ignore_border=True
+            #mode='average_exc_pad'
         )
         # pooled_out should be batch_size x 100 x 9 x 9
 
